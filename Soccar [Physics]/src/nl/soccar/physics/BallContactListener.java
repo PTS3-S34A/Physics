@@ -44,7 +44,7 @@ public class BallContactListener implements ContactListener {
         // If one of the above conditions are true, a player has touched the ball.
         if (car != null) {
             Player player = car.getPlayer();
-            Session session = Soccar.getInstance().getSessionController().getCurrentSession();
+            Session session = player.getCurrentSession();
             Ball ball = session.getGame().getMap().getBall();
             
             ball.setLastTouched(player);
