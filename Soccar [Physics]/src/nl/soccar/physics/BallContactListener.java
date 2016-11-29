@@ -4,7 +4,6 @@ import nl.soccar.library.Ball;
 import nl.soccar.library.Car;
 import nl.soccar.library.Player;
 import nl.soccar.library.Session;
-import nl.soccar.library.Soccar;
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
 import org.jbox2d.collision.Manifold;
