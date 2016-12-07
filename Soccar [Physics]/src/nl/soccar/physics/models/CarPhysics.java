@@ -1,11 +1,10 @@
 package nl.soccar.physics.models;
 
+import javafx.geometry.Point2D;
 import nl.soccar.library.Car;
+import nl.soccar.library.enumeration.ThrottleAction;
 import nl.soccar.physics.PhysicsConstants;
 import nl.soccar.physics.WorldObject;
-import nl.soccar.library.enumeration.HandbrakeAction;
-import nl.soccar.library.enumeration.SteerAction;
-import nl.soccar.library.enumeration.ThrottleAction;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.*;
@@ -37,6 +36,9 @@ public class CarPhysics implements WorldObject {
     private float steerAngle = 0.0F;
     private final Car car;
 
+    private List<Point2D> trail; // Holds the boost trail location
+    private boolean boostActive;
+
     /**
      * Initiates a new CarPhysics Object using the given parameters.
      *
@@ -45,6 +47,8 @@ public class CarPhysics implements WorldObject {
      */
     public CarPhysics(Car car, World world) {
         this.car = car;
+        this.trail = new ArrayList<>();
+        this.boostActive = false;
 
         float carWidth = car.getWidth();
         float carHeight = car.getHeight();
@@ -91,6 +95,10 @@ public class CarPhysics implements WorldObject {
         // Update each wheel
         wheels.forEach(WheelPhysics::step);
 
+        // Update trail
+        updateBoost();
+
+        // Move the car
         car.move(getX(), getY(), getDegree());
     }
 
@@ -105,12 +113,10 @@ public class CarPhysics implements WorldObject {
 
     /**
      * Updates the steer angle of the front wheels based on SteerAction
-     *
-     * @param steerAction
      */
     private void updateSteerAngle() {
         float wheelMaxSteerAngle = (float) Math.toRadians(PhysicsConstants.WHEEL_MAX_STEER_ANGLE);
-        float angleDiff = (wheelMaxSteerAngle / PhysicsConstants.WHEEL_MAX_TURN_IN_MS) * PhysicsConstants.MS_PER_FRAME;
+        float angleDiff = (wheelMaxSteerAngle / PhysicsConstants.WHEEL_MAX_TURN_IN_MS) * PhysicsConstants.ENGINE_REFRESH_RATE;
 
         switch (car.getSteerAction()) {
             case STEER_LEFT:
@@ -122,6 +128,33 @@ public class CarPhysics implements WorldObject {
             default:
                 steerAngle = 0;
                 break;
+        }
+    }
+
+    private void updateBoost() {
+
+        // Only allow boosting when the trail is gone.
+        if (car.getThrottleAction() == ThrottleAction.BOOST && trail.size() == 0) {
+            boostActive = true;
+        }
+
+        // Disable boost when the throttle action is not boost or boost amount is 0
+        if (car.getThrottleAction() != ThrottleAction.BOOST || car.getBoostAmount() == 0) {
+            boostActive = false;
+        }
+
+        // The trail has to remove itself when it's longer than max length or boost is not active.
+        if (trail.size() > PhysicsConstants.CAR_BOOST_TRAIL_SIZE || trail.size() > 0 && !boostActive) {
+            trail.remove(0);
+        }
+
+        // Make boost trail if active, refill when inactive.
+        if (boostActive) {
+            car.setBoostAmount(car.getBoostAmount() - PhysicsConstants.CAR_BOOST_DEPLETE_SPEED);
+            Vec2 exhaustPos = body.getWorldPoint(new Vec2(0, -car.getHeight() / 2));
+            trail.add(new Point2D(exhaustPos.x, exhaustPos.y));
+        } else {
+            car.setBoostAmount(car.getBoostAmount() + PhysicsConstants.CAR_BOOST_FILL_SPEED);
         }
     }
 
@@ -148,20 +181,19 @@ public class CarPhysics implements WorldObject {
         return body;
     }
 
-    public ThrottleAction getThrottleAction() {
-        return car.getThrottleAction();
-    }
-
-    public SteerAction getSteerAction() {
-        return car.getSteerAction();
-    }
-
-    public HandbrakeAction getHandbrakeAction() {
-        return car.getHandbrakeAction();
-    }
-
     public List<WheelPhysics> getWheels() {
         return Collections.unmodifiableList(wheels);
     }
 
+    public List<Point2D> getTrail() {
+        return trail;
+    }
+
+    public boolean isBoostActive() {
+        return boostActive;
+    }
+
+    public Car getCar() {
+        return car;
+    }
 }
