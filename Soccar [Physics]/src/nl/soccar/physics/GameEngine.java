@@ -90,11 +90,11 @@ public final class GameEngine {
                     objects.forEach(WorldObject::step);
                     checkScored();
                     break;
-                default:
-                    break;
                 case SCORED:
                     objects.forEach(WorldObject::reset);
                     game.setGoalScored(false);
+                    break;
+                default:
                     break;
             }
         }

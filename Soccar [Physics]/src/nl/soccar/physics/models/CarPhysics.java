@@ -134,7 +134,7 @@ public class CarPhysics implements WorldObject {
     private void updateBoost() {
 
         // Only allow boosting when the trail is gone.
-        if (car.getThrottleAction() == ThrottleAction.BOOST && trail.size() == 0) {
+        if (car.getThrottleAction() == ThrottleAction.BOOST && trail.isEmpty()) {
             boostActive = true;
         }
 
@@ -144,7 +144,7 @@ public class CarPhysics implements WorldObject {
         }
 
         // The trail has to remove itself when it's longer than max length or boost is not active.
-        if (trail.size() > PhysicsConstants.CAR_BOOST_TRAIL_SIZE || trail.size() > 0 && !boostActive) {
+        if (trail.size() > PhysicsConstants.CAR_BOOST_TRAIL_SIZE || !trail.isEmpty() && !boostActive) {
             trail.remove(0);
         }
 

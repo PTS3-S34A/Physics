@@ -102,7 +102,7 @@ public class WheelPhysics implements WorldObject {
         Vec2 currentForwardNormal = body.getWorldVector(new Vec2(0, 1));
 
         float currentSpeed = Vec2.dot(getForwardVelocity(), currentForwardNormal);
-        float force = power * 10;
+        float force = (float) power * 10;
 
         // Negative force
         if (desiredSpeed < currentSpeed) {
