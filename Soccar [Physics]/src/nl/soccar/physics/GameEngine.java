@@ -5,22 +5,19 @@
  */
 package nl.soccar.physics;
 
+import javafx.scene.shape.Rectangle;
+import nl.soccar.library.*;
+import nl.soccar.library.enumeration.EventType;
+import nl.soccar.library.enumeration.GameStatus;
+import org.jbox2d.dynamics.World;
+
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import javafx.scene.shape.Rectangle;
-import nl.soccar.library.Ball;
-import nl.soccar.library.Event;
-import nl.soccar.library.Game;
-import nl.soccar.library.Map;
-import nl.soccar.library.enumeration.EventType;
-import nl.soccar.library.enumeration.GameStatus;
-import org.jbox2d.dynamics.World;
 
 /**
- *
  * @author PTS34A
  */
 public final class GameEngine {
@@ -34,8 +31,8 @@ public final class GameEngine {
     /**
      * Initiates a new GamePhysics Object. It creates a world using settings
      * defined in constants.
-     * 
-     * @param game 
+     *
+     * @param game
      */
     public GameEngine(Game game) {
         this.game = game;
@@ -51,25 +48,24 @@ public final class GameEngine {
         if (game.getStatus() != GameStatus.STOPPED) {
             return;
         }
-        
+
         game.start();
-        
+
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 step();
             }
 
-        }, 0, PhysicsConstants.MS_PER_FRAME);
+        }, 0, PhysicsConstants.ENGINE_REFRESH_RATE);
     }
 
     public void stop() {
         if (game.getStatus() == GameStatus.STOPPED) {
             return;
         }
-        
+
         game.stop();
-        
         timer.cancel();
     }
 
@@ -78,19 +74,28 @@ public final class GameEngine {
      * physics models.
      */
     private void step() {
-        world.step(1.0F / PhysicsConstants.FPS, PhysicsConstants.VELOCITY_ITERATIONS, PhysicsConstants.POSITION_ITERATIONS);
+        world.step(1.0F / PhysicsConstants.ENGINE_FPS, PhysicsConstants.VELOCITY_ITERATIONS, PhysicsConstants.POSITION_ITERATIONS);
 
+        // Stop the game when the time is over.
+        if (game.getSecondsLeft() <= 0) {
+            stop();
+            game.stop();
+        }
+
+        // Update every object in the world
         synchronized (objects) {
-            if (game.getStatus() == GameStatus.RUNNING) {
-                objects.forEach(WorldObject::step);
-            }
 
-            checkScored();
-
-            if (game.getStatus() == GameStatus.SCORED) {
-                objects.forEach(WorldObject::reset);
-
-                game.setGoalScored(false);
+            switch (game.getStatus()) {
+                case RUNNING:
+                    objects.forEach(WorldObject::step);
+                    checkScored();
+                    break;
+                case SCORED:
+                    objects.forEach(WorldObject::reset);
+                    game.setGoalScored(false);
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -99,16 +104,25 @@ public final class GameEngine {
         Map map = game.getMap();
         Rectangle leftGoal = map.getGoalBlue();
         Rectangle rightGoal = map.getGoalRed();
-
         Ball ball = map.getBall();
+        Notification notification = game.getNotification();
+
         float ballX = ball.getX();
         float ballRadius = ball.getRadius();
 
+        // Handle notification
+        if (ballX > rightGoal.getX() + ballRadius
+                || ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius) {
+            notification.setDisplayTime(LocalTime.now());
+            notification.setPlayer(ball.getLastTouched());
+        }
+
+        // Handle score event
         if (ballX > rightGoal.getX() + ballRadius) {
-            game.addEvent(new Event(EventType.GOAL_RED, LocalTime.now(), ball.getLastTouched()));
+            game.addEvent(new Event(EventType.GOAL_BLUE, LocalTime.now(), ball.getLastTouched()));
             game.setGoalScored(true);
         } else if (ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius) {
-            game.addEvent(new Event(EventType.GOAL_BLUE, LocalTime.now(), ball.getLastTouched()));
+            game.addEvent(new Event(EventType.GOAL_RED, LocalTime.now(), ball.getLastTouched()));
             game.setGoalScored(true);
         }
     }
@@ -124,8 +138,12 @@ public final class GameEngine {
             objects.remove(object);
         }
     }
-    
+
     public World getWorld() {
         return world;
+    }
+
+    public Game getGame() {
+        return game;
     }
 }

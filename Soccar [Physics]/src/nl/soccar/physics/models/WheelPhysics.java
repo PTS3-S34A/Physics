@@ -24,7 +24,7 @@ public class WheelPhysics implements WorldObject {
     private static final boolean IS_SENSOR = true; // Do not include wheels in collision system (for performance).
 
     private final Body body;
-    private final CarPhysics car;
+    private final CarPhysics carPhysics;
     private final Body carBody;
 
     private final Vec2 originalPos;
@@ -35,6 +35,7 @@ public class WheelPhysics implements WorldObject {
     private boolean powered;
 
     private float desiredSpeed = 0.0F;
+    private int power;
 
 
     /**
@@ -46,12 +47,12 @@ public class WheelPhysics implements WorldObject {
      * @param height    The height of this Wheel.
      * @param steerable Determines whether this wheel is used to steer the Car.
      * @param powered   Determines whether this wheel is used to power the Car.
-     * @param car       The CarPhysics object.
+     * @param carPhysics       The CarPhysics object.
      * @param world     The world in which this Wheel is placed in.
      */
-    public WheelPhysics(float relPosX, float relPosY, float width, float height, boolean steerable, boolean powered, CarPhysics car, World world) {
-        this.car = car;
-        this.carBody = car.getBody();
+    public WheelPhysics(float relPosX, float relPosY, float width, float height, boolean steerable, boolean powered, CarPhysics carPhysics, World world) {
+        this.carPhysics = carPhysics;
+        this.carBody = carPhysics.getBody();
 
         this.width = width;
         this.height = height;
@@ -94,14 +95,14 @@ public class WheelPhysics implements WorldObject {
     }
 
     /**
-     * Apply force on the wheel based on the power of the car and the desired speed.
+     * Apply force on the wheel based on the power of the carPhysics and the desired speed.
      */
     public void updateDrive() {
 
         Vec2 currentForwardNormal = body.getWorldVector(new Vec2(0, 1));
 
         float currentSpeed = Vec2.dot(getForwardVelocity(), currentForwardNormal);
-        float force = PhysicsConstants.CAR_POWER * 10;
+        float force = (float) power * 10;
 
         // Negative force
         if (desiredSpeed < currentSpeed) {
@@ -114,6 +115,7 @@ public class WheelPhysics implements WorldObject {
             return;
         }
 
+        // Apply force according to desiredSpeed
         body.applyForce(currentForwardNormal.mul(force), body.getWorldCenter());
     }
 
@@ -124,7 +126,7 @@ public class WheelPhysics implements WorldObject {
 
         float massDiv;
 
-        if (car.getHandbrakeAction() == HandbrakeAction.ACTIVE) {
+        if (carPhysics.getCar().getHandbrakeAction() == HandbrakeAction.ACTIVE) {
             massDiv = PhysicsConstants.CAR_HANDBRAKE_SLIDE;
         } else {
             massDiv = PhysicsConstants.CAR_NORMAL_SLIDE;
@@ -136,30 +138,39 @@ public class WheelPhysics implements WorldObject {
     }
 
     /**
-     * Sets the speed the car should go towards. This is based on the ThrottleAction.
-     * The car will move towards this speed in the UpdateDrive method.
+     * Sets the speed the carPhysics should go towards. This is based on the ThrottleAction.
+     * The carPhysics will move towards this speed in the UpdateDrive method.
      *
      * @param throttleAction The throttle action.
      */
     public void setDesiredSpeed(ThrottleAction throttleAction) {
+
         switch (throttleAction) {
+            case BOOST:
             case ACCELERATE:
                 desiredSpeed = PhysicsConstants.CAR_MAX_SPEED;
+                power = PhysicsConstants.CAR_NORMAL_POWER;
                 break;
             case REVERSE:
                 desiredSpeed = -PhysicsConstants.CAR_MAX_REVERSE_SPEED;
+                power = PhysicsConstants.CAR_NORMAL_POWER;
                 break;
             default:
             case IDLE:
                 desiredSpeed = 0;
                 break;
         }
+
+        if (carPhysics.isBoostActive()) {
+            desiredSpeed = PhysicsConstants.CAR_MAX_BOOST_SPEED;
+            power = PhysicsConstants.CAR_BOOST_POWER;
+        }
     }
 
     /**
-     * Sets wheel's angle relative to the car's body (in degrees).
+     * Sets wheel's angle relative to the carPhysics's body (in degrees).
      *
-     * @param angle the new angle (not relative to the car) of this Wheel.
+     * @param angle the new angle (not relative to the carPhysics) of this Wheel.
      */
     public void setAngle(float angle) {
         body.m_sweep.a = carBody.getAngle() + angle;
@@ -184,11 +195,11 @@ public class WheelPhysics implements WorldObject {
         eliminateLateralVelocity();
 
         if (isSteerable()) {
-            setAngle(car.getSteerAngle());
+            setAngle(carPhysics.getSteerAngle());
         }
 
         if (isPowered()) {
-            setDesiredSpeed(car.getThrottleAction());
+            setDesiredSpeed(carPhysics.getCar().getThrottleAction());
             updateDrive();
         }
 
