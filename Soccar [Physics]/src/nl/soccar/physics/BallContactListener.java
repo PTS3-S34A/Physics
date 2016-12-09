@@ -1,9 +1,6 @@
 package nl.soccar.physics;
 
-import nl.soccar.library.Ball;
-import nl.soccar.library.Car;
-import nl.soccar.library.Player;
-import nl.soccar.library.Session;
+import nl.soccar.library.*;
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
 import org.jbox2d.collision.Manifold;
@@ -43,8 +40,29 @@ public class BallContactListener implements ContactListener {
         // If one of the above conditions are true, a player has touched the ball.
         if (car != null) {
             Player player = car.getPlayer();
+            if (player == null) {
+                return;
+            }
+
             Session session = player.getCurrentSession();
-            Ball ball = session.getGame().getMap().getBall();
+            if (session == null) {
+                return;
+            }
+
+            Game game = session.getGame();
+            if (game == null) {
+                return;
+            }
+
+            Map map = game.getMap();
+            if (map == null) {
+                return;
+            }
+
+            Ball ball = map.getBall();
+            if (ball == null) {
+                return;
+            }
             
             ball.setLastTouched(player);
         }
