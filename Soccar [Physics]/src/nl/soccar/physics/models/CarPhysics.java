@@ -33,9 +33,8 @@ public class CarPhysics implements WorldObject {
 
     private final Body body;
     private final List<WheelPhysics> wheels;
-    private float steerAngle = 0.0F;
     private final Car car;
-
+    private float steerAngle = 0.0F;
     private List<Point2D> trail; // Holds the boost trail location
     private boolean boostActive;
 
@@ -104,11 +103,17 @@ public class CarPhysics implements WorldObject {
 
     @Override
     public void reset() {
-        body.setLinearVelocity(new Vec2(0.0F, 0.0F));
-        body.setAngularVelocity(0.0F);
-        body.setTransform(originalPos, originalDegree);
+        setPosition(originalPos.x, originalPos.y, originalDegree, 0, 0, 0);
+    }
 
-        wheels.forEach(WheelPhysics::reset);
+    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        car.move(x, y, degree);
+
+        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
+        body.setAngularVelocity(angularVelocity);
+        body.setTransform(new Vec2(x, y), (float) Math.toRadians(degree));
+
+        //wheels.forEach(WheelPhysics::reset);
     }
 
     /**
@@ -171,6 +176,18 @@ public class CarPhysics implements WorldObject {
     @Override
     public float getDegree() {
         return (float) Math.toDegrees(body.getAngle());
+    }
+
+    public float getLinearVelocityX() {
+        return body.getLinearVelocity().x;
+    }
+
+    public float getLinearVelocityY() {
+        return body.getLinearVelocity().y;
+    }
+
+    public float getAngularVelocity() {
+        return body.getAngularVelocity();
     }
 
     public float getSteerAngle() {

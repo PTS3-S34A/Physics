@@ -7,15 +7,15 @@ package nl.soccar.physics;
 
 import javafx.scene.shape.Rectangle;
 import nl.soccar.library.*;
+import nl.soccar.library.Map;
 import nl.soccar.library.enumeration.EventType;
 import nl.soccar.library.enumeration.GameStatus;
+import nl.soccar.physics.models.BallPhysics;
+import nl.soccar.physics.models.CarPhysics;
 import org.jbox2d.dynamics.World;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * @author PTS34A
@@ -26,7 +26,10 @@ public final class GameEngine {
     private final Timer timer;
 
     private final Game game;
+
     private final List<WorldObject> objects = new ArrayList<>();
+    private final java.util.Map<Player, CarPhysics> cars = new HashMap<>();
+    private BallPhysics ball;
 
     /**
      * Initiates a new GamePhysics Object. It creates a world using settings
@@ -111,8 +114,8 @@ public final class GameEngine {
         float ballRadius = ball.getRadius();
 
         // Handle notification
-        if (ballX > rightGoal.getX() + ballRadius
-                || ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius) {
+        if (notification != null && (ballX > rightGoal.getX() + ballRadius
+                || ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius)) {
             notification.setDisplayTime(LocalTime.now());
             notification.setPlayer(ball.getLastTouched());
         }
@@ -127,16 +130,56 @@ public final class GameEngine {
         }
     }
 
+    public void addCar(Player player, CarPhysics car) {
+        cars.put(player, car);
+
+        synchronized (objects) {
+            objects.add(car);
+        }
+    }
+
+    public void removeCar(Player player) {
+        CarPhysics car = cars.remove(player);
+
+        synchronized (objects) {
+            objects.remove(car);
+        }
+    }
+
     public void addWorldObject(WorldObject object) {
+        if (object instanceof CarPhysics) {
+            throw new UnsupportedOperationException("Please use addCar(..) to add a car to the World.");
+        }
+
+        if (object instanceof BallPhysics) {
+            ball = (BallPhysics) object;
+        }
+
         synchronized (objects) {
             objects.add(object);
         }
     }
 
     public void removeWorldObject(WorldObject object) {
+        if (object instanceof Car) {
+            throw new UnsupportedOperationException("Please use removeCar(..) to remove a car from the World.");
+        }
+
+        if (object instanceof BallPhysics) {
+            ball = null;
+        }
+
         synchronized (objects) {
             objects.remove(object);
         }
+    }
+
+    public CarPhysics getCarFromPlayer(Player player) {
+        return cars.get(player);
+    }
+
+    public BallPhysics getBall() {
+        return ball;
     }
 
     public World getWorld() {
