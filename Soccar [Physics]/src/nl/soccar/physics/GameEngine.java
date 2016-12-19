@@ -16,15 +16,11 @@ import org.jbox2d.dynamics.World;
 
 import java.time.LocalTime;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author PTS34A
  */
 public final class GameEngine {
-
-    private static final Logger LOGGER = Logger.getLogger(GameEngine.class.getSimpleName());
 
     private final World world;
     private final Game game;
@@ -32,6 +28,8 @@ public final class GameEngine {
     private final java.util.Map<Player, CarPhysics> cars = new HashMap<>();
     private Timer timer;
     private BallPhysics ball;
+
+    private long lastSecondsDecreasedMs = 0;
 
     /**
      * Initiates a new GamePhysics Object. It creates a world using settings
@@ -80,20 +78,14 @@ public final class GameEngine {
      */
     private void step() {
         if (game.getStatus() == GameStatus.PAUSED) {
-            try {
-                Thread.sleep(10L);
-            } catch (InterruptedException e) {
-                LOGGER.log(Level.WARNING, "An error occurred while sleeping in the paused state (ignore).", e);
-            }
-
             return;
         }
 
         world.step(1.0F / PhysicsConstants.ENGINE_FPS, PhysicsConstants.VELOCITY_ITERATIONS, PhysicsConstants.POSITION_ITERATIONS);
 
-        // Stop the game when the time is over.
-        if (game.getSecondsLeft() <= 0) {
-            stop();
+        if (System.currentTimeMillis() - lastSecondsDecreasedMs >= 1000) {
+            game.decreaseGameTime();
+            lastSecondsDecreasedMs = System.currentTimeMillis();
         }
 
         // Update every object in the world
