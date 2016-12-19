@@ -1,9 +1,9 @@
 package nl.soccar.physics.models;
 
-import nl.soccar.physics.PhysicsConstants;
-import nl.soccar.physics.WorldObject;
 import nl.soccar.library.enumeration.HandbrakeAction;
 import nl.soccar.library.enumeration.ThrottleAction;
+import nl.soccar.physics.PhysicsConstants;
+import nl.soccar.physics.WorldObject;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.*;
@@ -41,14 +41,14 @@ public class WheelPhysics implements WorldObject {
     /**
      * Initiates a new WheelPhysics Object using the given parameters.
      *
-     * @param relPosX   The x-coordinate, relative to the Car.
-     * @param relPosY   The y-coordinate, relative to the Car.
-     * @param width     The width of this Wheel.
-     * @param height    The height of this Wheel.
-     * @param steerable Determines whether this wheel is used to steer the Car.
-     * @param powered   Determines whether this wheel is used to power the Car.
-     * @param carPhysics       The CarPhysics object.
-     * @param world     The world in which this Wheel is placed in.
+     * @param relPosX    The x-coordinate, relative to the Car.
+     * @param relPosY    The y-coordinate, relative to the Car.
+     * @param width      The width of this Wheel.
+     * @param height     The height of this Wheel.
+     * @param steerable  Determines whether this wheel is used to steer the Car.
+     * @param powered    Determines whether this wheel is used to power the Car.
+     * @param carPhysics The CarPhysics object.
+     * @param world      The world in which this Wheel is placed in.
      */
     public WheelPhysics(float relPosX, float relPosY, float width, float height, boolean steerable, boolean powered, CarPhysics carPhysics, World world) {
         this.carPhysics = carPhysics;
@@ -207,9 +207,14 @@ public class WheelPhysics implements WorldObject {
 
     @Override
     public void reset() {
+        setPosition(originalPos.x, originalPos.y, 0, 0, 0, 0);
+    }
+
+    @Override
+    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
         body.setLinearVelocity(new Vec2(0.0F, 0.0F));
         body.setAngularVelocity(0.0F);
-        body.setTransform(originalPos, 0.0F);
+        body.getPosition().set(x, y);
     }
 
     @Override

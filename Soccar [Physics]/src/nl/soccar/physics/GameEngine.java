@@ -23,12 +23,10 @@ import java.util.*;
 public final class GameEngine {
 
     private final World world;
-    private final Timer timer;
-
     private final Game game;
-
     private final List<WorldObject> objects = new ArrayList<>();
     private final java.util.Map<Player, CarPhysics> cars = new HashMap<>();
+    private Timer timer;
     private BallPhysics ball;
 
     /**
@@ -43,8 +41,6 @@ public final class GameEngine {
         // doSleep (second parameter) is true for better performance
         world = new World(PhysicsConstants.GRAVITY_ANGLE, true);
         world.setContactListener(new BallContactListener());
-
-        timer = new Timer();
     }
 
     public void start() {
@@ -54,6 +50,7 @@ public final class GameEngine {
 
         game.start();
 
+        timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -69,6 +66,7 @@ public final class GameEngine {
         }
 
         game.stop();
+
         timer.cancel();
     }
 
@@ -87,7 +85,6 @@ public final class GameEngine {
 
         // Update every object in the world
         synchronized (objects) {
-
             switch (game.getStatus()) {
                 case RUNNING:
                     objects.forEach(WorldObject::step);
