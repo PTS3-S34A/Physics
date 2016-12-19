@@ -1,6 +1,6 @@
 package nl.soccar.physics.models;
 
-import nl.soccar.library.*;
+import nl.soccar.library.Ball;
 import nl.soccar.physics.WorldObject;
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.common.Vec2;
@@ -65,9 +65,15 @@ public class BallPhysics implements WorldObject {
 
     @Override
     public void reset() {
-        body.setLinearVelocity(new Vec2(0.0F, 0.0F));
-        body.setAngularVelocity(0.0F);
-        body.setTransform(originalPos, 0.0F);
+        setPosition(originalPos.x, originalPos.y, 0, body.getLinearVelocity().x, body.getLinearVelocity().y, body.getAngularVelocity());
+    }
+
+    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
+        body.setAngularVelocity(angularVelocity);
+        body.setTransform(new Vec2(x, y), 0);
+
+        ball.move(x, y, degree);
     }
 
     @Override
@@ -83,6 +89,18 @@ public class BallPhysics implements WorldObject {
     @Override
     public float getDegree() {
         return (float) Math.toDegrees(body.getAngle());
+    }
+
+    public float getLinearVelocityX() {
+        return body.getLinearVelocity().x;
+    }
+
+    public float getLinearVelocityY() {
+        return body.getLinearVelocity().y;
+    }
+
+    public float getAngularVelocity() {
+        return body.getAngularVelocity();
     }
 
 }
