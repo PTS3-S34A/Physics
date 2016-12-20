@@ -69,11 +69,12 @@ public class BallPhysics implements WorldObject {
     }
 
     public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        degree = body.getAngle();
         ball.move(x, y, degree);
 
         body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
         body.setAngularVelocity(angularVelocity);
-        body.getPosition().set(x, y);
+        body.setTransform(new Vec2(x, y), degree);
     }
 
     @Override
