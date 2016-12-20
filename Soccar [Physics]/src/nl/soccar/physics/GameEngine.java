@@ -180,6 +180,12 @@ public final class GameEngine {
         return cars.get(player);
     }
 
+    public List<WorldObject> getWorldObjects() {
+        synchronized (objects) {
+            return Collections.unmodifiableList(objects);
+        }
+    }
+
     public BallPhysics getBall() {
         return ball;
     }
