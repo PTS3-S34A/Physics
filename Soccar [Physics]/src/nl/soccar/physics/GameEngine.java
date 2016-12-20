@@ -23,13 +23,13 @@ import java.util.*;
 public final class GameEngine {
 
     private final World world;
-    private final Timer timer;
-
     private final Game game;
-
     private final List<WorldObject> objects = new ArrayList<>();
     private final java.util.Map<Player, CarPhysics> cars = new HashMap<>();
+    private Timer timer;
     private BallPhysics ball;
+
+    private long lastSecondsDecreasedMs = 0;
 
     /**
      * Initiates a new GamePhysics Object. It creates a world using settings
@@ -43,8 +43,6 @@ public final class GameEngine {
         // doSleep (second parameter) is true for better performance
         world = new World(PhysicsConstants.GRAVITY_ANGLE, true);
         world.setContactListener(new BallContactListener());
-
-        timer = new Timer();
     }
 
     public void start() {
@@ -54,6 +52,7 @@ public final class GameEngine {
 
         game.start();
 
+        timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -69,6 +68,7 @@ public final class GameEngine {
         }
 
         game.stop();
+
         timer.cancel();
     }
 
@@ -77,17 +77,19 @@ public final class GameEngine {
      * physics models.
      */
     private void step() {
+        if (game.getStatus() == GameStatus.PAUSED) {
+            return;
+        }
+
         world.step(1.0F / PhysicsConstants.ENGINE_FPS, PhysicsConstants.VELOCITY_ITERATIONS, PhysicsConstants.POSITION_ITERATIONS);
 
-        // Stop the game when the time is over.
-        if (game.getSecondsLeft() <= 0) {
-            stop();
-            game.stop();
+        if (System.currentTimeMillis() - lastSecondsDecreasedMs >= 1000) {
+            game.decreaseGameTime();
+            lastSecondsDecreasedMs = System.currentTimeMillis();
         }
 
         // Update every object in the world
         synchronized (objects) {
-
             switch (game.getStatus()) {
                 case RUNNING:
                     objects.forEach(WorldObject::step);
@@ -176,6 +178,12 @@ public final class GameEngine {
 
     public CarPhysics getCarFromPlayer(Player player) {
         return cars.get(player);
+    }
+
+    public List<WorldObject> getWorldObjects() {
+        synchronized (objects) {
+            return Collections.unmodifiableList(objects);
+        }
     }
 
     public BallPhysics getBall() {

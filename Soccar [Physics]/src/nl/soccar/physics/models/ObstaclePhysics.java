@@ -3,6 +3,7 @@ package nl.soccar.physics.models;
 import nl.soccar.library.Obstacle;
 import nl.soccar.physics.WorldObject;
 import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.FixtureDef;
@@ -18,6 +19,7 @@ public class ObstaclePhysics implements WorldObject {
 
     private static final float FRICTION = 0.0F;
 
+    private final Obstacle obstacle;
     private final Body body;
 
     private final float width;
@@ -30,6 +32,8 @@ public class ObstaclePhysics implements WorldObject {
      * @param world    The World in which this model is placed in.
      */
     public ObstaclePhysics(Obstacle obstacle, World world) {
+        this.obstacle = obstacle;
+
         width = obstacle.getWidth();
         height = obstacle.getHeight();
 
@@ -46,6 +50,15 @@ public class ObstaclePhysics implements WorldObject {
 
         body = world.createBody(bd);
         body.createFixture(fd);
+    }
+
+    @Override
+    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        obstacle.move(x, y, degree);
+
+        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
+        body.setAngularVelocity(angularVelocity);
+        body.setTransform(new Vec2(x, y), (float) Math.toRadians(degree));
     }
 
     @Override
@@ -66,6 +79,10 @@ public class ObstaclePhysics implements WorldObject {
     @Override
     public float getY() {
         return body.getPosition().y;
+    }
+
+    public Obstacle getObstacle() {
+        return obstacle;
     }
 
     @Override

@@ -104,16 +104,17 @@ public class CarPhysics implements WorldObject {
     @Override
     public void reset() {
         setPosition(originalPos.x, originalPos.y, originalDegree, 0, 0, 0);
+
+        wheels.forEach(WheelPhysics::reset);
     }
 
+    @Override
     public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
         car.move(x, y, degree);
 
         body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
         body.setAngularVelocity(angularVelocity);
         body.setTransform(new Vec2(x, y), (float) Math.toRadians(degree));
-
-        //wheels.forEach(WheelPhysics::reset);
     }
 
     /**

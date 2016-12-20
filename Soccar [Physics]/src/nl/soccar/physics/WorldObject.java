@@ -15,6 +15,8 @@ public interface WorldObject {
      */
     void step();
 
+    void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity);
+
     /**
      * Resets the WorldObject to its original position.
      */
