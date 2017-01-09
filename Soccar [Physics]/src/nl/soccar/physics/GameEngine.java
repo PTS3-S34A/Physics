@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package nl.soccar.physics;
 
 import javafx.scene.shape.Rectangle;
@@ -95,10 +90,6 @@ public final class GameEngine {
                     objects.forEach(WorldObject::step);
                     checkScored();
                     break;
-                case SCORED:
-                    objects.forEach(WorldObject::reset);
-                    game.setGoalScored(false);
-                    break;
                 default:
                     break;
             }
@@ -125,10 +116,10 @@ public final class GameEngine {
         // Handle score event
         if (ballX > rightGoal.getX() + ballRadius) {
             game.addEvent(new Event(EventType.GOAL_BLUE, LocalTime.now(), ball.getLastTouched()));
-            game.setGoalScored(true);
+            resetWorldObjects();
         } else if (ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius) {
             game.addEvent(new Event(EventType.GOAL_RED, LocalTime.now(), ball.getLastTouched()));
-            game.setGoalScored(true);
+            resetWorldObjects();
         }
     }
 
@@ -176,6 +167,12 @@ public final class GameEngine {
         }
     }
 
+    private void resetWorldObjects() {
+        synchronized (objects) {
+            objects.forEach(WorldObject::reset);
+        }
+    }
+
     public CarPhysics getCarFromPlayer(Player player) {
         return cars.get(player);
     }
@@ -197,4 +194,5 @@ public final class GameEngine {
     public Game getGame() {
         return game;
     }
+
 }

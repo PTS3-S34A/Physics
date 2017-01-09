@@ -53,7 +53,7 @@ public class CarPhysics implements WorldObject {
         float carHeight = car.getHeight();
 
         originalPos = new Vec2(car.getX(), car.getY());
-        originalDegree = (float) Math.toRadians(car.getDegree());
+        originalDegree = car.getDegree();
 
         BodyDef bd = new BodyDef();
         bd.type = BodyType.DYNAMIC;
