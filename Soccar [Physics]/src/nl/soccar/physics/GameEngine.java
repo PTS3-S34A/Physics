@@ -45,6 +45,9 @@ public final class GameEngine {
         world.setContactListener(new BallContactListener());
     }
 
+    /**
+     * Creates a new timer and starts the game with the specified frame rate.
+     */
     public void start() {
         if (game.getStatus() != GameStatus.STOPPED) {
             return;
@@ -62,6 +65,9 @@ public final class GameEngine {
         }, 0, PhysicsConstants.ENGINE_REFRESH_RATE);
     }
 
+    /**
+     * Stops the game.
+     */
     public void stop() {
         if (game.getStatus() == GameStatus.STOPPED) {
             return;
@@ -105,6 +111,9 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Checks on every frame whether the ball crossed the goal line and updates the score accordingly.
+     */
     private void checkScored() {
         Map map = game.getMap();
         Rectangle leftGoal = map.getGoalBlue();
@@ -132,6 +141,12 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Adds a car to the world.
+     *
+     * @param player
+     * @param car
+     */
     public void addCar(Player player, CarPhysics car) {
         cars.put(player, car);
 
@@ -140,6 +155,11 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Removes a car from the world.
+     *
+     * @param player
+     */
     public void removeCar(Player player) {
         CarPhysics car = cars.remove(player);
 
@@ -148,6 +168,11 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Adds an object to the world.
+     *
+     * @param object
+     */
     public void addWorldObject(WorldObject object) {
         if (object instanceof CarPhysics) {
             throw new UnsupportedOperationException("Please use addCar(..) to add a car to the World.");
@@ -162,6 +187,11 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Removes an object from the world.
+     *
+     * @param object
+     */
     public void removeWorldObject(WorldObject object) {
         if (object instanceof Car) {
             throw new UnsupportedOperationException("Please use removeCar(..) to remove a car from the World.");
@@ -176,24 +206,50 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Get the car object that belongs to a player.
+     *
+     * @param player The player to get the car object from.
+     * @return The car object.
+     */
     public CarPhysics getCarFromPlayer(Player player) {
         return cars.get(player);
     }
 
+    /**
+     * Returns a list of all world objects.
+     *
+     * @return The world objects
+     */
     public List<WorldObject> getWorldObjects() {
         synchronized (objects) {
             return Collections.unmodifiableList(objects);
         }
     }
 
+    /**
+     * Returns the ball physics object.
+     *
+     * @return The ball physics object.
+     */
     public BallPhysics getBall() {
         return ball;
     }
 
+    /**
+     * Returns the Box2D world object.
+     *
+     * @return Box2D world.
+     */
     public World getWorld() {
         return world;
     }
 
+    /**
+     * Returns the game object from the library.
+     *
+     * @return The game object.
+     */
     public Game getGame() {
         return game;
     }

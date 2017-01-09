@@ -15,6 +15,16 @@ public interface WorldObject {
      */
     void step();
 
+    /**
+     * Sets the position and velocity values for a world object.
+     *
+     * @param x               The X position value.
+     * @param y               The Y position value.
+     * @param degree          The current angle.
+     * @param linearVelocityX The X velocity value.
+     * @param linearVelocityY The Y velocity value.
+     * @param angularVelocity The angular velocity value.
+     */
     void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity);
 
     /**

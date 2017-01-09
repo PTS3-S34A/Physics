@@ -177,16 +177,59 @@ public class WheelPhysics implements WorldObject {
     }
 
     /**
-     * Sets wheel's velocity vector with sideways velocity subtracted.
+     * Gets the lateral velocity vector.
+     *
+     * @return Lateral velocity
      */
     private Vec2 getLateralVelocity() {
         Vec2 currentRightNormal = body.getWorldVector(new Vec2(1, 0));
         return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
     }
 
+    /**
+     * Gets the forward velocity.
+     *
+     * @return Forward velocity
+     */
     private Vec2 getForwardVelocity() {
         Vec2 currentRightNormal = body.getWorldVector(new Vec2(0, 1));
         return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
+    }
+
+    /**
+     * Returns the wheel width.
+     *
+     * @return The wheel width.
+     */
+    public float getWidth() {
+        return width;
+    }
+
+    /**
+     * Returns the wheel height.
+     *
+     * @return The wheel height.
+     */
+    public float getHeight() {
+        return height;
+    }
+
+    /**
+     * Returns whether this wheel is steerable.
+     *
+     * @return boolean
+     */
+    public boolean isSteerable() {
+        return steerable;
+    }
+
+    /**
+     * Returns whether this wheel is powered.
+     *
+     * @return boolean
+     */
+    public boolean isPowered() {
+        return powered;
     }
 
     @Override
@@ -230,22 +273,6 @@ public class WheelPhysics implements WorldObject {
     @Override
     public float getDegree() {
         return (float) Math.toDegrees(body.getAngle());
-    }
-
-    public float getWidth() {
-        return width;
-    }
-
-    public float getHeight() {
-        return height;
-    }
-
-    public boolean isSteerable() {
-        return steerable;
-    }
-
-    public boolean isPowered() {
-        return powered;
     }
 
 }

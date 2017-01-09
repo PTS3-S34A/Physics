@@ -17,15 +17,13 @@ public class BallPhysics implements WorldObject {
     private static final float DENSITY = 0.01F;
     private static final float FRICTION = 1.0F;
     private static final float RESTITUTION = 0.8F;
-
     private static final float LINEAR_DAMPING = 1.0F;
     private static final float ANGULAR_DAMPING = 1.0F;
 
-    private final Vec2 originalPos;
-
     private final Body body;
-    private final float radius;
     private Ball ball;
+    private final float radius;
+    private final Vec2 originalPos;
 
     /**
      * Initiates a new BallPhysics Object using the given parameter.
@@ -58,6 +56,44 @@ public class BallPhysics implements WorldObject {
         body.createFixture(fd);
     }
 
+    /**
+     * Returns the X value from the linear velocity vector
+     *
+     * @return LinearVelocityX
+     */
+    public float getLinearVelocityX() {
+        return body.getLinearVelocity().x;
+    }
+
+    /**
+     * Returns the Y value from the linear velocity vector
+     *
+     * @return LinearVelocityY
+     */
+    public float getLinearVelocityY() {
+        return body.getLinearVelocity().y;
+    }
+
+    /**
+     * Returns the angular velocity
+     *
+     * @return AngularVelocity
+     */
+    public float getAngularVelocity() {
+        return body.getAngularVelocity();
+    }
+
+
+    @Override
+    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        degree = body.getAngle();
+        ball.move(x, y, degree);
+
+        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
+        body.setAngularVelocity(angularVelocity);
+        body.setTransform(new Vec2(x, y), degree);
+    }
+
     @Override
     public void step() {
         ball.move(getX(), getY(), getDegree());
@@ -66,15 +102,6 @@ public class BallPhysics implements WorldObject {
     @Override
     public void reset() {
         setPosition(originalPos.x, originalPos.y, 0, body.getLinearVelocity().x, body.getLinearVelocity().y, body.getAngularVelocity());
-    }
-
-    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
-        degree = body.getAngle();
-        ball.move(x, y, degree);
-
-        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
-        body.setAngularVelocity(angularVelocity);
-        body.setTransform(new Vec2(x, y), degree);
     }
 
     @Override
@@ -90,18 +117,6 @@ public class BallPhysics implements WorldObject {
     @Override
     public float getDegree() {
         return (float) Math.toDegrees(body.getAngle());
-    }
-
-    public float getLinearVelocityX() {
-        return body.getLinearVelocity().x;
-    }
-
-    public float getLinearVelocityY() {
-        return body.getLinearVelocity().y;
-    }
-
-    public float getAngularVelocity() {
-        return body.getAngularVelocity();
     }
 
 }

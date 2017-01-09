@@ -21,22 +21,20 @@ import java.util.List;
 public class CarPhysics implements WorldObject {
 
     private static final boolean BULLET = true;
-
     private static final float DENSITY = 0.2F;
     private static final float RESTITUTION = 0.2F;
-
     private static final float WHEEL_POS_RATIO_X = 2.3F;
     private static final float WHEEL_POS_RATIO_Y = 4.0F;
 
+    private final Body body;
+    private final Car car;
+    private final List<WheelPhysics> wheels;
+    private List<Point2D> trail;
+
+    private float steerAngle;
+    private boolean boostActive;
     private final Vec2 originalPos;
     private final float originalDegree;
-
-    private final Body body;
-    private final List<WheelPhysics> wheels;
-    private final Car car;
-    private float steerAngle = 0.0F;
-    private List<Point2D> trail; // Holds the boost trail location
-    private boolean boostActive;
 
     /**
      * Initiates a new CarPhysics Object using the given parameters.
@@ -48,6 +46,7 @@ public class CarPhysics implements WorldObject {
         this.car = car;
         this.trail = new ArrayList<>();
         this.boostActive = false;
+        this.steerAngle = 0.0F;
 
         float carWidth = car.getWidth();
         float carHeight = car.getHeight();
@@ -137,6 +136,9 @@ public class CarPhysics implements WorldObject {
         }
     }
 
+    /**
+     * Handles the boost amount and the boost trail list
+     */
     private void updateBoost() {
 
         // Only allow boosting when the trail is gone.
@@ -164,6 +166,88 @@ public class CarPhysics implements WorldObject {
         }
     }
 
+    /**
+     * Returns the X value from the linear velocity vector
+     *
+     * @return LinearVelocityX
+     */
+    public float getLinearVelocityX() {
+        return body.getLinearVelocity().x;
+    }
+
+    /**
+     * Returns the Y value from the linear velocity vector
+     *
+     * @return LinearVelocityY
+     */
+    public float getLinearVelocityY() {
+        return body.getLinearVelocity().y;
+    }
+
+    /**
+     * Returns the angular velocity
+     *
+     * @return AngularVelocity
+     */
+    public float getAngularVelocity() {
+        return body.getAngularVelocity();
+    }
+
+
+    /**
+     * Returns the current steering angle of the car.
+     *
+     * @return The steering angle.
+     */
+    public float getSteerAngle() {
+        return steerAngle;
+    }
+
+    /**
+     * Returns the Box2D body.
+     *
+     * @return The Box2D body.
+     */
+    public Body getBody() {
+        return body;
+    }
+
+    /**
+     * Return the wheels that belong to this car.
+     *
+     * @return The wheel physics objects.
+     */
+    public List<WheelPhysics> getWheels() {
+        return Collections.unmodifiableList(wheels);
+    }
+
+    /**
+     * Returns the boost trail list.
+     *
+     * @return The boost trail list
+     */
+    public List<Point2D> getTrail() {
+        return trail;
+    }
+
+    /**
+     * Returns whether the boost is currently active.
+     *
+     * @return boolean
+     */
+    public boolean isBoostActive() {
+        return boostActive;
+    }
+
+    /**
+     * Returns the car object (library).
+     *
+     * @return The car object.
+     */
+    public Car getCar() {
+        return car;
+    }
+
     @Override
     public float getX() {
         return body.getPosition().x;
@@ -177,41 +261,5 @@ public class CarPhysics implements WorldObject {
     @Override
     public float getDegree() {
         return (float) Math.toDegrees(body.getAngle());
-    }
-
-    public float getLinearVelocityX() {
-        return body.getLinearVelocity().x;
-    }
-
-    public float getLinearVelocityY() {
-        return body.getLinearVelocity().y;
-    }
-
-    public float getAngularVelocity() {
-        return body.getAngularVelocity();
-    }
-
-    public float getSteerAngle() {
-        return steerAngle;
-    }
-
-    public Body getBody() {
-        return body;
-    }
-
-    public List<WheelPhysics> getWheels() {
-        return Collections.unmodifiableList(wheels);
-    }
-
-    public List<Point2D> getTrail() {
-        return trail;
-    }
-
-    public boolean isBoostActive() {
-        return boostActive;
-    }
-
-    public Car getCar() {
-        return car;
     }
 }

@@ -52,6 +52,14 @@ public class ObstaclePhysics implements WorldObject {
         body.createFixture(fd);
     }
 
+    /**
+     * Returns the obstacle object.
+     * @return The obstacle object.
+     */
+    public Obstacle getObstacle() {
+        return obstacle;
+    }
+
     @Override
     public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
         obstacle.move(x, y, degree);
@@ -79,10 +87,6 @@ public class ObstaclePhysics implements WorldObject {
     @Override
     public float getY() {
         return body.getPosition().y;
-    }
-
-    public Obstacle getObstacle() {
-        return obstacle;
     }
 
     @Override
