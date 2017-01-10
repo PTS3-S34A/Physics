@@ -48,6 +48,12 @@ public class BallPhysics extends AbstractWorldObject {
 
     @Override
     protected void doStep() {
+        synchronized (lock) {
+            if (body == null) {
+                return;
+            }
+        }
+
         ball.move(getX(), getY(), getDegree());
     }
 
