@@ -5,6 +5,7 @@ import nl.soccar.library.*;
 import nl.soccar.library.Map;
 import nl.soccar.library.enumeration.EventType;
 import nl.soccar.library.enumeration.GameStatus;
+import nl.soccar.physics.listener.GameEventListener;
 import nl.soccar.physics.models.BallPhysics;
 import nl.soccar.physics.models.CarPhysics;
 import org.jbox2d.dynamics.World;
@@ -18,12 +19,16 @@ import java.util.*;
 public final class GameEngine {
 
     private final World world;
+
+    private final Session session;
+    private final Room room;
     private final Game game;
+
     private final List<WorldObject> objects = new ArrayList<>();
     private final java.util.Map<Player, CarPhysics> cars = new HashMap<>();
+    private final List<GameEventListener> listeners = new ArrayList<>();
     private Timer timer;
     private BallPhysics ball;
-
     private long lastSecondsDecreasedMs = 0;
 
     /**
@@ -32,8 +37,10 @@ public final class GameEngine {
      *
      * @param game
      */
-    public GameEngine(Game game) {
-        this.game = game;
+    public GameEngine(Session session) {
+        this.session = session;
+        game = session.getGame();
+        room = session.getRoom();
 
         // doSleep (second parameter) is true for better performance
         world = new World(PhysicsConstants.GRAVITY_ANGLE, true);
@@ -65,6 +72,22 @@ public final class GameEngine {
         game.stop();
 
         timer.cancel();
+    }
+
+    public void addListener(GameEventListener listener) {
+        Objects.requireNonNull(listener);
+
+        synchronized (listeners) {
+            listeners.add(listener);
+        }
+    }
+
+    public void removeListener(GameEventListener listener) {
+        Objects.requireNonNull(listener);
+
+        synchronized (listeners) {
+            listeners.remove(listener);
+        }
     }
 
     /**
@@ -115,11 +138,9 @@ public final class GameEngine {
 
         // Handle score event
         if (ballX > rightGoal.getX() + ballRadius) {
-            game.addEvent(new Event(EventType.GOAL_BLUE, LocalTime.now(), ball.getLastTouched()));
-            resetWorldObjects();
+            listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_BLUE));
         } else if (ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius) {
-            game.addEvent(new Event(EventType.GOAL_RED, LocalTime.now(), ball.getLastTouched()));
-            resetWorldObjects();
+            listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_RED));
         }
     }
 
@@ -167,10 +188,12 @@ public final class GameEngine {
         }
     }
 
-    private void resetWorldObjects() {
+    public void resetWorldObjects() {
         synchronized (objects) {
             objects.forEach(WorldObject::reset);
         }
+
+        world.clearForces();
     }
 
     public CarPhysics getCarFromPlayer(Player player) {
