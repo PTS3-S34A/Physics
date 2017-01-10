@@ -68,6 +68,12 @@ public class WheelPhysics extends AbstractWorldObject {
 
     @Override
     public void doStep() {
+        synchronized (lock) {
+            if (body == null) {
+                return;
+            }
+        }
+
         eliminateLateralVelocity();
 
         if (isSteerable()) {

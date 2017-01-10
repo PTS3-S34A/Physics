@@ -75,6 +75,12 @@ public class CarPhysics extends AbstractWorldObject {
 
     @Override
     protected void doStep() {
+        synchronized (lock) {
+            if (body == null) {
+                return;
+            }
+        }
+
         // Update the steering angle
         updateSteerAngle();
 
@@ -101,7 +107,7 @@ public class CarPhysics extends AbstractWorldObject {
 
     @Override
     public void reset() {
-        car.move(originalPos.x, originalPos.y, originalDegree);
+        car.move(originalPos.x, originalPos.y, (float) Math.toDegrees(originalDegree));
 
         synchronized (lock) {
             if (body != null) {
