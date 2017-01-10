@@ -1,7 +1,7 @@
 package nl.soccar.physics.models;
 
 import nl.soccar.library.Ball;
-import nl.soccar.physics.WorldObject;
+import nl.soccar.physics.AbstractWorldObject;
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.*;
@@ -12,7 +12,7 @@ import org.jbox2d.dynamics.*;
  *
  * @author PTS34A
  */
-public class BallPhysics implements WorldObject {
+public class BallPhysics extends AbstractWorldObject {
 
     private static final float DENSITY = 0.01F;
     private static final float FRICTION = 1.0F;
@@ -21,10 +21,13 @@ public class BallPhysics implements WorldObject {
     private static final float LINEAR_DAMPING = 1.0F;
     private static final float ANGULAR_DAMPING = 1.0F;
 
+    private final Object lock = new Object();
+
     private final Vec2 originalPos;
 
-    private final Body body;
+    private final World world;
     private final float radius;
+    private Body body;
     private Ball ball;
 
     /**
@@ -34,74 +37,97 @@ public class BallPhysics implements WorldObject {
      * @param world The world in which this model is placed.
      */
     public BallPhysics(Ball ball, World world) {
+        this.world = world;
+
         this.ball = ball;
         originalPos = new Vec2(ball.getX(), ball.getY());
         radius = ball.getRadius();
 
-        BodyDef bd = new BodyDef();
-        bd.type = BodyType.DYNAMIC;
-        bd.position.set(originalPos);
-        bd.linearDamping = LINEAR_DAMPING;
-        bd.angularDamping = ANGULAR_DAMPING;
-
-        CircleShape cs = new CircleShape();
-        cs.m_radius = radius;
-
-        FixtureDef fd = new FixtureDef();
-        fd.density = DENSITY;
-        fd.friction = FRICTION;
-        fd.restitution = RESTITUTION;
-        fd.shape = cs;
-        fd.userData = ball;
-
-        body = world.createBody(bd);
-        body.createFixture(fd);
+        reset();
     }
 
     @Override
-    public void step() {
+    protected void doStep() {
         ball.move(getX(), getY(), getDegree());
+    }
+
+    protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        ball.move(x, y, 0);
+
+        synchronized (lock) {
+            body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
+            body.setAngularVelocity(angularVelocity);
+            body.setTransform(new Vec2(x, y), body.getAngle());
+        }
     }
 
     @Override
     public void reset() {
-        setPosition(originalPos.x, originalPos.y, 0, body.getLinearVelocity().x, body.getLinearVelocity().y, body.getAngularVelocity());
-    }
+        ball.move(originalPos.x, originalPos.y, 0);
 
-    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
-        degree = body.getAngle();
-        ball.move(x, y, degree);
+        synchronized (lock) {
+            if (body != null) {
+                world.destroyBody(body);
+            }
 
-        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
-        body.setAngularVelocity(angularVelocity);
-        body.setTransform(new Vec2(x, y), degree);
+            BodyDef bd = new BodyDef();
+            bd.type = BodyType.DYNAMIC;
+            bd.position.set(originalPos);
+            bd.linearDamping = LINEAR_DAMPING;
+            bd.angularDamping = ANGULAR_DAMPING;
+
+            CircleShape cs = new CircleShape();
+            cs.m_radius = radius;
+
+            FixtureDef fd = new FixtureDef();
+            fd.density = DENSITY;
+            fd.friction = FRICTION;
+            fd.restitution = RESTITUTION;
+            fd.shape = cs;
+            fd.userData = ball;
+
+            body = world.createBody(bd);
+            body.createFixture(fd);
+        }
     }
 
     @Override
     public float getX() {
-        return body.getPosition().x;
+        synchronized (lock) {
+            return body.getPosition().x;
+        }
     }
 
     @Override
     public float getY() {
-        return body.getPosition().y;
+        synchronized (lock) {
+            return body.getPosition().y;
+        }
     }
 
     @Override
     public float getDegree() {
-        return (float) Math.toDegrees(body.getAngle());
+        synchronized (lock) {
+            return (float) Math.toDegrees(body.getAngle());
+        }
     }
 
     public float getLinearVelocityX() {
-        return body.getLinearVelocity().x;
+        synchronized (lock) {
+            return body.getLinearVelocity().x;
+        }
     }
 
     public float getLinearVelocityY() {
-        return body.getLinearVelocity().y;
+        synchronized (lock) {
+            return body.getLinearVelocity().y;
+        }
     }
 
     public float getAngularVelocity() {
-        return body.getAngularVelocity();
+        synchronized (lock) {
+            return body.getAngularVelocity();
+        }
     }
 
 }

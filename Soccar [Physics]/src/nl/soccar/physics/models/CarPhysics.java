@@ -3,8 +3,8 @@ package nl.soccar.physics.models;
 import javafx.geometry.Point2D;
 import nl.soccar.library.Car;
 import nl.soccar.library.enumeration.ThrottleAction;
+import nl.soccar.physics.AbstractWorldObject;
 import nl.soccar.physics.PhysicsConstants;
-import nl.soccar.physics.WorldObject;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.*;
@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author PTS34A
  */
-public class CarPhysics implements WorldObject {
+public class CarPhysics extends AbstractWorldObject {
 
     private static final boolean BULLET = true;
 
@@ -28,12 +28,14 @@ public class CarPhysics implements WorldObject {
     private static final float WHEEL_POS_RATIO_X = 2.3F;
     private static final float WHEEL_POS_RATIO_Y = 4.0F;
 
+    private final Object lock = new Object();
+
     private final Vec2 originalPos;
     private final float originalDegree;
-
-    private final Body body;
     private final List<WheelPhysics> wheels;
     private final Car car;
+    private final World world;
+    private Body body;
     private float steerAngle = 0.0F;
     private List<Point2D> trail; // Holds the boost trail location
     private boolean boostActive;
@@ -45,6 +47,8 @@ public class CarPhysics implements WorldObject {
      * @param world The world in which this model is placed.
      */
     public CarPhysics(Car car, World world) {
+        this.world = world;
+
         this.car = car;
         this.trail = new ArrayList<>();
         this.boostActive = false;
@@ -53,27 +57,10 @@ public class CarPhysics implements WorldObject {
         float carHeight = car.getHeight();
 
         originalPos = new Vec2(car.getX(), car.getY());
-        originalDegree = car.getDegree();
-
-        BodyDef bd = new BodyDef();
-        bd.type = BodyType.DYNAMIC;
-        bd.position.set(originalPos);
-        bd.angle = originalDegree;
-        bd.bullet = BULLET; // Prevents tunneling
-
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(carWidth / 2, carHeight / 2);
-
-        FixtureDef fd = new FixtureDef();
-        fd.density = DENSITY;
-        fd.restitution = RESTITUTION;
-        fd.shape = shape;
-        fd.userData = car;
-
-        body = world.createBody(bd);
-        body.createFixture(fd);
+        originalDegree = (float) Math.toRadians(car.getDegree());
 
         wheels = new ArrayList<>();
+        reset();
 
         // TODO: Calculate wheel positions from PhysicsUtilities, WHEEL_POS_RATIO should be defined in DisplayConstants.
         float wheelWidth = car.getWheelWidth();
@@ -87,7 +74,7 @@ public class CarPhysics implements WorldObject {
     }
 
     @Override
-    public void step() {
+    protected void doStep() {
         // Update the steering angle
         updateSteerAngle();
 
@@ -102,19 +89,45 @@ public class CarPhysics implements WorldObject {
     }
 
     @Override
-    public void reset() {
-        setPosition(originalPos.x, originalPos.y, originalDegree, 0, 0, 0);
+    protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        car.move(x, y, degree);
 
-        wheels.forEach(WheelPhysics::reset);
+        synchronized (lock) {
+            body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
+            body.setAngularVelocity(angularVelocity);
+            body.setTransform(new Vec2(x, y), (float) Math.toRadians(degree));
+        }
     }
 
     @Override
-    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
-        car.move(x, y, degree);
+    public void reset() {
+        car.move(originalPos.x, originalPos.y, originalDegree);
 
-        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
-        body.setAngularVelocity(angularVelocity);
-        body.setTransform(new Vec2(x, y), (float) Math.toRadians(degree));
+        synchronized (lock) {
+            if (body != null) {
+                world.destroyBody(body);
+            }
+
+            BodyDef bd = new BodyDef();
+            bd.type = BodyType.DYNAMIC;
+            bd.position.set(originalPos);
+            bd.angle = originalDegree;
+            bd.bullet = BULLET; // Prevents tunneling
+
+            PolygonShape shape = new PolygonShape();
+            shape.setAsBox(car.getWidth() / 2, car.getHeight() / 2);
+
+            FixtureDef fd = new FixtureDef();
+            fd.density = DENSITY;
+            fd.restitution = RESTITUTION;
+            fd.shape = shape;
+            fd.userData = car;
+
+            body = world.createBody(bd);
+            body.createFixture(fd);
+
+            wheels.forEach(WheelPhysics::reset);
+        }
     }
 
     /**
@@ -138,7 +151,6 @@ public class CarPhysics implements WorldObject {
     }
 
     private void updateBoost() {
-
         // Only allow boosting when the trail is gone.
         if (car.getThrottleAction() == ThrottleAction.BOOST && trail.isEmpty()) {
             boostActive = true;
@@ -166,29 +178,41 @@ public class CarPhysics implements WorldObject {
 
     @Override
     public float getX() {
-        return body.getPosition().x;
+        synchronized (lock) {
+            return body.getPosition().x;
+        }
     }
 
     @Override
     public float getY() {
-        return body.getPosition().y;
+        synchronized (lock) {
+            return body.getPosition().y;
+        }
     }
 
     @Override
     public float getDegree() {
-        return (float) Math.toDegrees(body.getAngle());
+        synchronized (lock) {
+            return (float) Math.toDegrees(body.getAngle());
+        }
     }
 
     public float getLinearVelocityX() {
-        return body.getLinearVelocity().x;
+        synchronized (lock) {
+            return body.getLinearVelocity().x;
+        }
     }
 
     public float getLinearVelocityY() {
-        return body.getLinearVelocity().y;
+        synchronized (lock) {
+            return body.getLinearVelocity().y;
+        }
     }
 
     public float getAngularVelocity() {
-        return body.getAngularVelocity();
+        synchronized (lock) {
+            return body.getAngularVelocity();
+        }
     }
 
     public float getSteerAngle() {
@@ -196,7 +220,9 @@ public class CarPhysics implements WorldObject {
     }
 
     public Body getBody() {
-        return body;
+        synchronized (lock) {
+            return body;
+        }
     }
 
     public List<WheelPhysics> getWheels() {
