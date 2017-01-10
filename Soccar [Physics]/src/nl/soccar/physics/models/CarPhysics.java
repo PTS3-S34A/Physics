@@ -79,19 +79,19 @@ public class CarPhysics extends AbstractWorldObject {
             if (body == null) {
                 return;
             }
+
+            // Update the steering angle
+            updateSteerAngle();
+
+            // Update each wheel
+            wheels.forEach(WheelPhysics::step);
+
+            // Update trail
+            updateBoost();
+
+            // Move the car
+            car.move(getX(), getY(), getDegree());
         }
-
-        // Update the steering angle
-        updateSteerAngle();
-
-        // Update each wheel
-        wheels.forEach(WheelPhysics::step);
-
-        // Update trail
-        updateBoost();
-
-        // Move the car
-        car.move(getX(), getY(), getDegree());
     }
 
     @Override
@@ -99,6 +99,10 @@ public class CarPhysics extends AbstractWorldObject {
         car.move(x, y, degree);
 
         synchronized (lock) {
+            if (body == null) {
+                return;
+            }
+
             body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
             body.setAngularVelocity(angularVelocity);
             body.setTransform(new Vec2(x, y), (float) Math.toRadians(degree));

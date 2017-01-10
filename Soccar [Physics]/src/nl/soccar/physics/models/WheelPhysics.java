@@ -72,17 +72,17 @@ public class WheelPhysics extends AbstractWorldObject {
             if (body == null) {
                 return;
             }
-        }
 
-        eliminateLateralVelocity();
+            eliminateLateralVelocity();
 
-        if (isSteerable()) {
-            setAngle(carPhysics.getSteerAngle());
-        }
+            if (isSteerable()) {
+                setAngle(carPhysics.getSteerAngle());
+            }
 
-        if (isPowered()) {
-            setDesiredSpeed(carPhysics.getCar().getThrottleAction());
-            updateDrive();
+            if (isPowered()) {
+                setDesiredSpeed(carPhysics.getCar().getThrottleAction());
+                updateDrive();
+            }
         }
     }
 

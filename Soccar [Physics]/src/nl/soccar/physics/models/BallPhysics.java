@@ -52,15 +52,19 @@ public class BallPhysics extends AbstractWorldObject {
             if (body == null) {
                 return;
             }
-        }
 
-        ball.move(getX(), getY(), getDegree());
+            ball.move(getX(), getY(), getDegree());
+        }
     }
 
     protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
         ball.move(x, y, 0);
 
         synchronized (lock) {
+            if (body == null) {
+                return;
+            }
+
             body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
             body.setAngularVelocity(angularVelocity);
             body.setTransform(new Vec2(x, y), body.getAngle());
