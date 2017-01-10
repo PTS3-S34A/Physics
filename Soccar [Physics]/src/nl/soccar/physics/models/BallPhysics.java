@@ -21,8 +21,6 @@ public class BallPhysics extends AbstractWorldObject {
     private static final float LINEAR_DAMPING = 1.0F;
     private static final float ANGULAR_DAMPING = 1.0F;
 
-    private final Object lock = new Object();
-
     private final Vec2 originalPos;
 
     private final World world;
@@ -43,102 +41,75 @@ public class BallPhysics extends AbstractWorldObject {
         originalPos = new Vec2(ball.getX(), ball.getY());
         radius = ball.getRadius();
 
-        reset();
+        doReset();
     }
 
     @Override
     protected void doStep() {
-        synchronized (lock) {
-            if (body == null) {
-                return;
-            }
-
-            ball.move(getX(), getY(), getDegree());
-        }
+        ball.move(getX(), getY(), getDegree());
     }
 
     protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
         ball.move(x, y, 0);
 
-        synchronized (lock) {
-            if (body == null) {
-                return;
-            }
-
-            body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
-            body.setAngularVelocity(angularVelocity);
-            body.setTransform(new Vec2(x, y), body.getAngle());
-        }
+        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
+        body.setAngularVelocity(angularVelocity);
+        body.setTransform(new Vec2(x, y), body.getAngle());
     }
 
     @Override
-    public void reset() {
+    protected void doReset() {
         ball.move(originalPos.x, originalPos.y, 0);
 
-        synchronized (lock) {
-            if (body != null) {
-                world.destroyBody(body);
-                body = null;
-            }
-
-            BodyDef bd = new BodyDef();
-            bd.type = BodyType.DYNAMIC;
-            bd.position.set(originalPos);
-            bd.linearDamping = LINEAR_DAMPING;
-            bd.angularDamping = ANGULAR_DAMPING;
-
-            CircleShape cs = new CircleShape();
-            cs.m_radius = radius;
-
-            FixtureDef fd = new FixtureDef();
-            fd.density = DENSITY;
-            fd.friction = FRICTION;
-            fd.restitution = RESTITUTION;
-            fd.shape = cs;
-            fd.userData = ball;
-
-            body = world.createBody(bd);
-            body.createFixture(fd);
+        if (body != null) {
+            world.destroyBody(body);
         }
+
+        BodyDef bd = new BodyDef();
+        bd.type = BodyType.DYNAMIC;
+        bd.position.set(originalPos);
+        bd.linearDamping = LINEAR_DAMPING;
+        bd.angularDamping = ANGULAR_DAMPING;
+
+        CircleShape cs = new CircleShape();
+        cs.m_radius = radius;
+
+        FixtureDef fd = new FixtureDef();
+        fd.density = DENSITY;
+        fd.friction = FRICTION;
+        fd.restitution = RESTITUTION;
+        fd.shape = cs;
+        fd.userData = ball;
+
+        body = world.createBody(bd);
+        body.createFixture(fd);
     }
 
     @Override
     public float getX() {
-        synchronized (lock) {
-            return body.getPosition().x;
-        }
+        return body.getPosition().x;
     }
 
     @Override
     public float getY() {
-        synchronized (lock) {
-            return body.getPosition().y;
-        }
+        return body.getPosition().y;
     }
 
     @Override
     public float getDegree() {
-        synchronized (lock) {
-            return (float) Math.toDegrees(body.getAngle());
-        }
+        return (float) Math.toDegrees(body.getAngle());
     }
 
     public float getLinearVelocityX() {
-        synchronized (lock) {
-            return body.getLinearVelocity().x;
-        }
+        return body.getLinearVelocity().x;
     }
 
     public float getLinearVelocityY() {
-        synchronized (lock) {
-            return body.getLinearVelocity().y;
-        }
+        return body.getLinearVelocity().y;
     }
 
     public float getAngularVelocity() {
-        synchronized (lock) {
-            return body.getAngularVelocity();
-        }
+        return body.getAngularVelocity();
     }
 
 }
