@@ -24,6 +24,7 @@ public class WheelPhysics extends AbstractWorldObject {
     private static final float DENSITY = 1.0F;
     private static final boolean IS_SENSOR = true; // Do not include wheels in collision system (for performance).
 
+    private final Object lock = new Object();
     private final CarPhysics carPhysics;
 
     private final Vec2 originalPos;
@@ -87,44 +88,46 @@ public class WheelPhysics extends AbstractWorldObject {
 
     @Override
     public void reset() {
-        if (joint != null) {
-            world.destroyJoint(joint);
-        }
+        synchronized (lock) {
+            if (joint != null) {
+                world.destroyJoint(joint);
+            }
 
-        if (body != null) {
-            world.destroyBody(body);
-        }
+            if (body != null) {
+                world.destroyBody(body);
+            }
 
-        BodyDef bd = new BodyDef();
-        bd.type = BodyType.DYNAMIC;
-        bd.position = originalPos;
-        bd.angle = carPhysics.getBody().getAngle();
-        bd.linearDamping = LINEAR_DAMPING; // Simulates friction
-        bd.angularDamping = ANGULAR_DAMPING;
+            BodyDef bd = new BodyDef();
+            bd.type = BodyType.DYNAMIC;
+            bd.position = originalPos;
+            bd.angle = carPhysics.getBody().getAngle();
+            bd.linearDamping = LINEAR_DAMPING; // Simulates friction
+            bd.angularDamping = ANGULAR_DAMPING;
 
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(width / 2, height / 2);
+            PolygonShape shape = new PolygonShape();
+            shape.setAsBox(width / 2, height / 2);
 
-        FixtureDef fd = new FixtureDef();
-        fd.density = DENSITY;
-        fd.isSensor = IS_SENSOR;
-        fd.shape = shape;
+            FixtureDef fd = new FixtureDef();
+            fd.density = DENSITY;
+            fd.isSensor = IS_SENSOR;
+            fd.shape = shape;
 
-        body = world.createBody(bd);
-        body.createFixture(fd);
+            body = world.createBody(bd);
+            body.createFixture(fd);
 
-        if (steerable) {
-            RevoluteJointDef jd = new RevoluteJointDef();
-            jd.initialize(carPhysics.getBody(), body, body.getWorldCenter());
-            jd.enableMotor = true;
-            joint = world.createJoint(jd);
-        } else {
-            PrismaticJointDef jd = new PrismaticJointDef();
-            jd.initialize(carPhysics.getBody(), body, body.getWorldCenter(), new Vec2(1, 0));
-            jd.enableLimit = true;
-            jd.lowerTranslation = 0;
-            jd.upperTranslation = 0;
-            joint = world.createJoint(jd);
+            if (steerable) {
+                RevoluteJointDef jd = new RevoluteJointDef();
+                jd.initialize(carPhysics.getBody(), body, body.getWorldCenter());
+                jd.enableMotor = true;
+                joint = world.createJoint(jd);
+            } else {
+                PrismaticJointDef jd = new PrismaticJointDef();
+                jd.initialize(carPhysics.getBody(), body, body.getWorldCenter(), new Vec2(1, 0));
+                jd.enableLimit = true;
+                jd.lowerTranslation = 0;
+                jd.upperTranslation = 0;
+                joint = world.createJoint(jd);
+            }
         }
     }
 
@@ -132,56 +135,61 @@ public class WheelPhysics extends AbstractWorldObject {
      * Apply force on the wheel based on the power of the carPhysics and the desired speed.
      */
     private void updateDrive() {
+        synchronized (lock) {
+            Vec2 currentForwardNormal = body.getWorldVector(new Vec2(0, 1));
 
-        Vec2 currentForwardNormal = body.getWorldVector(new Vec2(0, 1));
+            float currentSpeed = Vec2.dot(getForwardVelocity(), currentForwardNormal);
+            float force = (float) power * 10;
 
-        float currentSpeed = Vec2.dot(getForwardVelocity(), currentForwardNormal);
-        float force = (float) power * 10;
+            // Negative force
+            if (desiredSpeed < currentSpeed) {
+                force *= -1;
+            }
 
-        // Negative force
-        if (desiredSpeed < currentSpeed) {
-            force *= -1;
+            // Don't do anything
+            if (Math.abs(desiredSpeed - currentSpeed) < 0.0001F) { // Calculate absolute of values, then check if it is below a treshold
+                // Because floating points literals will (almost) never be equal.
+                return;
+            }
+
+            // Apply force according to desiredSpeed
+            body.applyForce(currentForwardNormal.mul(force), body.getWorldCenter());
         }
-
-        // Don't do anything
-        if (Math.abs(desiredSpeed - currentSpeed) < 0.0001F) { // Calculate absolute of values, then check if it is below a treshold
-            // Because floating points literals will (almost) never be equal.
-            return;
-        }
-
-        // Apply force according to desiredSpeed
-        body.applyForce(currentForwardNormal.mul(force), body.getWorldCenter());
     }
 
     /**
      * Eliminates sideways velocity.
      */
     private void eliminateLateralVelocity() {
-
         float massDiv;
-
         if (carPhysics.getCar().getHandbrakeAction() == HandbrakeAction.ACTIVE) {
             massDiv = PhysicsConstants.CAR_HANDBRAKE_SLIDE;
         } else {
             massDiv = PhysicsConstants.CAR_NORMAL_SLIDE;
         }
 
-        // Lateral velocity
-        Vec2 impulse = getLateralVelocity().mul(-body.getMass() / massDiv);
-        body.applyLinearImpulse(impulse, body.getWorldCenter());
+        synchronized (lock) {
+            // Lateral velocity
+            Vec2 impulse = getLateralVelocity().mul(-body.getMass() / massDiv);
+            body.applyLinearImpulse(impulse, body.getWorldCenter());
+        }
     }
 
     /**
      * Sets wheel's velocity vector with sideways velocity subtracted.
      */
     private Vec2 getLateralVelocity() {
-        Vec2 currentRightNormal = body.getWorldVector(new Vec2(1, 0));
-        return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
+        synchronized (lock) {
+            Vec2 currentRightNormal = body.getWorldVector(new Vec2(1, 0));
+            return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
+        }
     }
 
     private Vec2 getForwardVelocity() {
-        Vec2 currentRightNormal = body.getWorldVector(new Vec2(0, 1));
-        return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
+        synchronized (lock) {
+            Vec2 currentRightNormal = body.getWorldVector(new Vec2(0, 1));
+            return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
+        }
     }
 
     /**
@@ -219,22 +227,31 @@ public class WheelPhysics extends AbstractWorldObject {
      * @param angle the new angle (not relative to the carPhysics) of this Wheel.
      */
     private void setAngle(float angle) {
-        body.m_sweep.a = carPhysics.getBody().getAngle() + angle;
+        synchronized (lock) {
+            body.m_sweep.a = carPhysics.getBody().getAngle() + angle;
+        }
     }
 
     @Override
     public float getX() {
-        return body.getPosition().x;
+        synchronized (lock) {
+            return body.getPosition().x;
+        }
     }
 
     @Override
     public float getY() {
-        return body.getPosition().y;
+        synchronized (lock) {
+            return body.getPosition().y;
+        }
     }
 
     @Override
     public float getDegree() {
-        return (float) Math.toDegrees(body.getAngle());
+        synchronized (lock) {
+            return (float) Math.toDegrees(body.getAngle());
+        }
+
     }
 
     public float getWidth() {
