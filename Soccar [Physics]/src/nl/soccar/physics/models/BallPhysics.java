@@ -78,6 +78,7 @@ public class BallPhysics extends AbstractWorldObject {
         synchronized (lock) {
             if (body != null) {
                 world.destroyBody(body);
+                body = null;
             }
 
             BodyDef bd = new BodyDef();

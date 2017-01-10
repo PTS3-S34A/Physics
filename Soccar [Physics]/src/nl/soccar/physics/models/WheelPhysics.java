@@ -97,10 +97,12 @@ public class WheelPhysics extends AbstractWorldObject {
         synchronized (lock) {
             if (joint != null) {
                 world.destroyJoint(joint);
+                joint = null;
             }
 
             if (body != null) {
                 world.destroyBody(body);
+                body = null;
             }
 
             BodyDef bd = new BodyDef();

@@ -116,6 +116,7 @@ public class CarPhysics extends AbstractWorldObject {
         synchronized (lock) {
             if (body != null) {
                 world.destroyBody(body);
+                body = null;
             }
 
             BodyDef bd = new BodyDef();
@@ -135,9 +136,9 @@ public class CarPhysics extends AbstractWorldObject {
 
             body = world.createBody(bd);
             body.createFixture(fd);
-
-            wheels.forEach(WheelPhysics::reset);
         }
+
+        wheels.forEach(WheelPhysics::reset);
     }
 
     /**
