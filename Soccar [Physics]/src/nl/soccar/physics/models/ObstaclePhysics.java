@@ -1,7 +1,7 @@
 package nl.soccar.physics.models;
 
 import nl.soccar.library.Obstacle;
-import nl.soccar.physics.WorldObject;
+import nl.soccar.physics.AbstractWorldObject;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
@@ -15,7 +15,7 @@ import org.jbox2d.dynamics.World;
  *
  * @author PTS34A
  */
-public class ObstaclePhysics implements WorldObject {
+public class ObstaclePhysics extends AbstractWorldObject {
 
     private static final float FRICTION = 0.0F;
 
@@ -61,7 +61,7 @@ public class ObstaclePhysics implements WorldObject {
     }
 
     @Override
-    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+    protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
         obstacle.move(x, y, degree);
 
         body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
@@ -70,12 +70,12 @@ public class ObstaclePhysics implements WorldObject {
     }
 
     @Override
-    public void step() {
+    protected void doStep() {
         // The step method is not implemented because obstacles never move on the map.
     }
 
     @Override
-    public void reset() {
+    protected void doReset() {
         // The reset method is not implemented because obstacles never move on the map.
     }
 

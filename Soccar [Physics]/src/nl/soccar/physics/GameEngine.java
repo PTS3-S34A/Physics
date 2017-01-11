@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package nl.soccar.physics;
 
 import javafx.scene.shape.Rectangle;
@@ -10,6 +5,7 @@ import nl.soccar.library.*;
 import nl.soccar.library.Map;
 import nl.soccar.library.enumeration.EventType;
 import nl.soccar.library.enumeration.GameStatus;
+import nl.soccar.physics.listener.GameEventListener;
 import nl.soccar.physics.models.BallPhysics;
 import nl.soccar.physics.models.CarPhysics;
 import org.jbox2d.dynamics.World;
@@ -23,9 +19,16 @@ import java.util.*;
 public final class GameEngine {
 
     private final World world;
+
+    private final Session session;
+    private final Room room;
     private final Game game;
+
     private final List<WorldObject> objects = new ArrayList<>();
     private final java.util.Map<Player, CarPhysics> cars = new HashMap<>();
+
+    private final List<GameEventListener> listeners = new ArrayList<>();
+
     private Timer timer;
     private BallPhysics ball;
 
@@ -35,10 +38,12 @@ public final class GameEngine {
      * Initiates a new GamePhysics Object. It creates a world using settings
      * defined in constants.
      *
-     * @param game
+     * @param session the Session in which this GameEngine is operating.
      */
-    public GameEngine(Game game) {
-        this.game = game;
+    public GameEngine(Session session) {
+        this.session = session;
+        game = session.getGame();
+        room = session.getRoom();
 
         // doSleep (second parameter) is true for better performance
         world = new World(PhysicsConstants.GRAVITY_ANGLE, true);
@@ -79,6 +84,32 @@ public final class GameEngine {
     }
 
     /**
+     * Adds a listener to this GameEngine.
+     *
+     * @param listener The listener to add.
+     */
+    public void addListener(GameEventListener listener) {
+        Objects.requireNonNull(listener);
+
+        synchronized (listeners) {
+            listeners.add(listener);
+        }
+    }
+
+    /**
+     * Removes a listener from this GameEngine.
+     *
+     * @param listener The listener to remove.
+     */
+    public void removeListener(GameEventListener listener) {
+        Objects.requireNonNull(listener);
+
+        synchronized (listeners) {
+            listeners.remove(listener);
+        }
+    }
+
+    /**
      * Steps the underlying world and applies all kinds of factors to update all
      * physics models.
      */
@@ -100,10 +131,6 @@ public final class GameEngine {
                 case RUNNING:
                     objects.forEach(WorldObject::step);
                     checkScored();
-                    break;
-                case SCORED:
-                    objects.forEach(WorldObject::reset);
-                    game.setGoalScored(false);
                     break;
                 default:
                     break;
@@ -133,19 +160,17 @@ public final class GameEngine {
 
         // Handle score event
         if (ballX > rightGoal.getX() + ballRadius) {
-            game.addEvent(new Event(EventType.GOAL_BLUE, LocalTime.now(), ball.getLastTouched()));
-            game.setGoalScored(true);
+            listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_BLUE));
         } else if (ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius) {
-            game.addEvent(new Event(EventType.GOAL_RED, LocalTime.now(), ball.getLastTouched()));
-            game.setGoalScored(true);
+            listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_RED));
         }
     }
 
     /**
-     * Adds a car to the world.
+     * Adds a car to the World.
      *
-     * @param player
-     * @param car
+     * @param player The Player that owns the Car.
+     * @param car The Car to add to the World.
      */
     public void addCar(Player player, CarPhysics car) {
         cars.put(player, car);
@@ -158,7 +183,7 @@ public final class GameEngine {
     /**
      * Removes a car from the world.
      *
-     * @param player
+     * @param player The Player that owns the Car.
      */
     public void removeCar(Player player) {
         CarPhysics car = cars.remove(player);
@@ -169,9 +194,9 @@ public final class GameEngine {
     }
 
     /**
-     * Adds an object to the world.
+     * Adds an object to the World.
      *
-     * @param object
+     * @param object The object to add to the World.
      */
     public void addWorldObject(WorldObject object) {
         if (object instanceof CarPhysics) {
@@ -188,9 +213,9 @@ public final class GameEngine {
     }
 
     /**
-     * Removes an object from the world.
+     * Removes an object from the World.
      *
-     * @param object
+     * @param object The Object to remove from the World.
      */
     public void removeWorldObject(WorldObject object) {
         if (object instanceof Car) {
@@ -204,6 +229,17 @@ public final class GameEngine {
         synchronized (objects) {
             objects.remove(object);
         }
+    }
+
+    /**
+     * Resets all objects currently in the World.
+     */
+    public void resetWorldObjects() {
+        synchronized (objects) {
+            objects.forEach(WorldObject::reset);
+        }
+
+        world.clearForces();
     }
 
     /**
@@ -253,4 +289,5 @@ public final class GameEngine {
     public Game getGame() {
         return game;
     }
+
 }

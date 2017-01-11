@@ -56,4 +56,6 @@ public interface WorldObject {
      */
     float getDegree();
 
+    boolean isResetting();
+
 }

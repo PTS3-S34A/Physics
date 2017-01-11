@@ -3,8 +3,8 @@ package nl.soccar.physics.models;
 import javafx.geometry.Point2D;
 import nl.soccar.library.Car;
 import nl.soccar.library.enumeration.ThrottleAction;
+import nl.soccar.physics.AbstractWorldObject;
 import nl.soccar.physics.PhysicsConstants;
-import nl.soccar.physics.WorldObject;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.*;
@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author PTS34A
  */
-public class CarPhysics implements WorldObject {
+public class CarPhysics extends AbstractWorldObject {
 
     private static final boolean BULLET = true;
     private static final float DENSITY = 0.2F;
@@ -26,15 +26,20 @@ public class CarPhysics implements WorldObject {
     private static final float WHEEL_POS_RATIO_X = 2.3F;
     private static final float WHEEL_POS_RATIO_Y = 4.0F;
 
-    private final Body body;
-    private final Car car;
+    private final Vec2 originalPos;
+    private final float originalDegree;
+
     private final List<WheelPhysics> wheels;
+
+    private final World world;
+    private Body body;
+
+    private final Car car;
+
     private List<Point2D> trail;
 
     private float steerAngle;
     private boolean boostActive;
-    private final Vec2 originalPos;
-    private final float originalDegree;
 
     /**
      * Initiates a new CarPhysics Object using the given parameters.
@@ -43,6 +48,8 @@ public class CarPhysics implements WorldObject {
      * @param world The world in which this model is placed.
      */
     public CarPhysics(Car car, World world) {
+        this.world = world;
+
         this.car = car;
         this.trail = new ArrayList<>();
         this.boostActive = false;
@@ -54,25 +61,8 @@ public class CarPhysics implements WorldObject {
         originalPos = new Vec2(car.getX(), car.getY());
         originalDegree = (float) Math.toRadians(car.getDegree());
 
-        BodyDef bd = new BodyDef();
-        bd.type = BodyType.DYNAMIC;
-        bd.position.set(originalPos);
-        bd.angle = originalDegree;
-        bd.bullet = BULLET; // Prevents tunneling
-
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(carWidth / 2, carHeight / 2);
-
-        FixtureDef fd = new FixtureDef();
-        fd.density = DENSITY;
-        fd.restitution = RESTITUTION;
-        fd.shape = shape;
-        fd.userData = car;
-
-        body = world.createBody(bd);
-        body.createFixture(fd);
-
         wheels = new ArrayList<>();
+        doReset();
 
         // TODO: Calculate wheel positions from PhysicsUtilities, WHEEL_POS_RATIO should be defined in DisplayConstants.
         float wheelWidth = car.getWheelWidth();
@@ -86,7 +76,7 @@ public class CarPhysics implements WorldObject {
     }
 
     @Override
-    public void step() {
+    protected void doStep() {
         // Update the steering angle
         updateSteerAngle();
 
@@ -101,19 +91,91 @@ public class CarPhysics implements WorldObject {
     }
 
     @Override
-    public void reset() {
-        setPosition(originalPos.x, originalPos.y, originalDegree, 0, 0, 0);
-
-        wheels.forEach(WheelPhysics::reset);
-    }
-
-    @Override
-    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+    protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
         car.move(x, y, degree);
 
         body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
         body.setAngularVelocity(angularVelocity);
         body.setTransform(new Vec2(x, y), (float) Math.toRadians(degree));
+    }
+
+    @Override
+    protected void doReset() {
+        car.move(originalPos.x, originalPos.y, (float) Math.toDegrees(originalDegree));
+        car.setBoostAmount(Car.DEFAULT_BOOST_AMOUNT);
+
+        if (body != null) {
+            world.destroyBody(body);
+        }
+
+        BodyDef bd = new BodyDef();
+        bd.type = BodyType.DYNAMIC;
+        bd.position.set(originalPos);
+        bd.angle = originalDegree;
+        bd.bullet = BULLET; // Prevents tunneling
+
+        PolygonShape shape = new PolygonShape();
+        shape.setAsBox(car.getWidth() / 2, car.getHeight() / 2);
+
+        FixtureDef fd = new FixtureDef();
+        fd.density = DENSITY;
+        fd.restitution = RESTITUTION;
+        fd.shape = shape;
+        fd.userData = car;
+
+        body = world.createBody(bd);
+        body.createFixture(fd);
+
+        wheels.forEach(WheelPhysics::reset);
+    }
+
+    /**
+     * Updates the steer angle of the front wheels based on SteerAction
+     */
+    private void updateSteerAngle() {
+        float wheelMaxSteerAngle = (float) Math.toRadians(PhysicsConstants.WHEEL_MAX_STEER_ANGLE);
+        float angleDiff = (wheelMaxSteerAngle / PhysicsConstants.WHEEL_MAX_TURN_IN_MS) * PhysicsConstants.ENGINE_REFRESH_RATE;
+
+        switch (car.getSteerAction()) {
+            case STEER_LEFT:
+                steerAngle = Math.min(Math.max(steerAngle, 0) + angleDiff, wheelMaxSteerAngle);
+                break;
+            case STEER_RIGHT:
+                steerAngle = Math.max(Math.min(steerAngle, 0) - angleDiff, -wheelMaxSteerAngle);
+                break;
+            default:
+                steerAngle = 0;
+                break;
+        }
+    }
+
+    /**
+     * Handles the boost amount and the boost trail list
+     */
+    private void updateBoost() {
+        // Only allow boosting when the trail is gone.
+        if (car.getThrottleAction() == ThrottleAction.BOOST && trail.isEmpty()) {
+            boostActive = true;
+        }
+
+        // Disable boost when the throttle action is not boost or boost amount is 0
+        if (car.getThrottleAction() != ThrottleAction.BOOST || car.getBoostAmount() == 0) {
+            boostActive = false;
+        }
+
+        // The trail has to remove itself when it's longer than max length or boost is not active.
+        if (trail.size() > PhysicsConstants.CAR_BOOST_TRAIL_SIZE || !trail.isEmpty() && !boostActive) {
+            trail.remove(0);
+        }
+
+        // Make boost trail if active, refill when inactive.
+        if (boostActive) {
+            car.setBoostAmount(car.getBoostAmount() - PhysicsConstants.CAR_BOOST_DEPLETE_SPEED);
+            Vec2 exhaustPos = body.getWorldPoint(new Vec2(0, -car.getHeight() / 2));
+            trail.add(new Point2D(exhaustPos.x, exhaustPos.y));
+        } else {
+            car.setBoostAmount(car.getBoostAmount() + PhysicsConstants.CAR_BOOST_FILL_SPEED);
+        }
     }
 
     /**
@@ -213,53 +275,4 @@ public class CarPhysics implements WorldObject {
         return (float) Math.toDegrees(body.getAngle());
     }
 
-    /**
-     * Updates the steer angle of the front wheels based on SteerAction
-     */
-    private void updateSteerAngle() {
-        float wheelMaxSteerAngle = (float) Math.toRadians(PhysicsConstants.WHEEL_MAX_STEER_ANGLE);
-        float angleDiff = (wheelMaxSteerAngle / PhysicsConstants.WHEEL_MAX_TURN_IN_MS) * PhysicsConstants.ENGINE_REFRESH_RATE;
-
-        switch (car.getSteerAction()) {
-            case STEER_LEFT:
-                steerAngle = Math.min(Math.max(steerAngle, 0) + angleDiff, wheelMaxSteerAngle);
-                break;
-            case STEER_RIGHT:
-                steerAngle = Math.max(Math.min(steerAngle, 0) - angleDiff, -wheelMaxSteerAngle);
-                break;
-            default:
-                steerAngle = 0;
-                break;
-        }
-    }
-
-    /**
-     * Handles the boost amount and the boost trail list
-     */
-    private void updateBoost() {
-
-        // Only allow boosting when the trail is gone.
-        if (car.getThrottleAction() == ThrottleAction.BOOST && trail.isEmpty()) {
-            boostActive = true;
-        }
-
-        // Disable boost when the throttle action is not boost or boost amount is 0
-        if (car.getThrottleAction() != ThrottleAction.BOOST || car.getBoostAmount() == 0) {
-            boostActive = false;
-        }
-
-        // The trail has to remove itself when it's longer than max length or boost is not active.
-        if (trail.size() > PhysicsConstants.CAR_BOOST_TRAIL_SIZE || !trail.isEmpty() && !boostActive) {
-            trail.remove(0);
-        }
-
-        // Make boost trail if active, refill when inactive.
-        if (boostActive) {
-            car.setBoostAmount(car.getBoostAmount() - PhysicsConstants.CAR_BOOST_DEPLETE_SPEED);
-            Vec2 exhaustPos = body.getWorldPoint(new Vec2(0, -car.getHeight() / 2));
-            trail.add(new Point2D(exhaustPos.x, exhaustPos.y));
-        } else {
-            car.setBoostAmount(car.getBoostAmount() + PhysicsConstants.CAR_BOOST_FILL_SPEED);
-        }
-    }
 }
