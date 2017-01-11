@@ -65,13 +65,11 @@ public final class GameEngine {
     }
 
     public void stop() {
-        if (game.getStatus() == GameStatus.STOPPED) {
-            return;
-        }
-
         game.stop();
 
         timer.cancel();
+        timer.purge();
+        timer = null;
     }
 
     public void addListener(GameEventListener listener) {
