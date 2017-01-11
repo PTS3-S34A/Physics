@@ -1,7 +1,7 @@
 package nl.soccar.physics.models;
 
 import nl.soccar.library.Ball;
-import nl.soccar.physics.WorldObject;
+import nl.soccar.physics.AbstractWorldObject;
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.*;
@@ -12,7 +12,7 @@ import org.jbox2d.dynamics.*;
  *
  * @author PTS34A
  */
-public class BallPhysics implements WorldObject {
+public class BallPhysics extends AbstractWorldObject {
 
     private static final float DENSITY = 0.01F;
     private static final float FRICTION = 1.0F;
@@ -23,8 +23,9 @@ public class BallPhysics implements WorldObject {
 
     private final Vec2 originalPos;
 
-    private final Body body;
+    private final World world;
     private final float radius;
+    private Body body;
     private Ball ball;
 
     /**
@@ -34,9 +35,35 @@ public class BallPhysics implements WorldObject {
      * @param world The world in which this model is placed.
      */
     public BallPhysics(Ball ball, World world) {
+        this.world = world;
+
         this.ball = ball;
         originalPos = new Vec2(ball.getX(), ball.getY());
         radius = ball.getRadius();
+
+        doReset();
+    }
+
+    @Override
+    protected void doStep() {
+        ball.move(getX(), getY(), getDegree());
+    }
+
+    protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        ball.move(x, y, 0);
+
+        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
+        body.setAngularVelocity(angularVelocity);
+        body.setTransform(new Vec2(x, y), body.getAngle());
+    }
+
+    @Override
+    protected void doReset() {
+        ball.move(originalPos.x, originalPos.y, 0);
+
+        if (body != null) {
+            world.destroyBody(body);
+        }
 
         BodyDef bd = new BodyDef();
         bd.type = BodyType.DYNAMIC;
@@ -56,25 +83,6 @@ public class BallPhysics implements WorldObject {
 
         body = world.createBody(bd);
         body.createFixture(fd);
-    }
-
-    @Override
-    public void step() {
-        ball.move(getX(), getY(), getDegree());
-    }
-
-    @Override
-    public void reset() {
-        setPosition(originalPos.x, originalPos.y, 0, body.getLinearVelocity().x, body.getLinearVelocity().y, body.getAngularVelocity());
-    }
-
-    public void setPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
-        degree = body.getAngle();
-        ball.move(x, y, degree);
-
-        body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
-        body.setAngularVelocity(angularVelocity);
-        body.setTransform(new Vec2(x, y), degree);
     }
 
     @Override
