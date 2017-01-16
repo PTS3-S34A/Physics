@@ -54,6 +54,7 @@ public class ObstaclePhysics extends AbstractWorldObject {
 
     /**
      * Returns the obstacle object.
+     *
      * @return The obstacle object.
      */
     public Obstacle getObstacle() {
