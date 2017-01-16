@@ -10,7 +10,6 @@ import nl.soccar.physics.models.BallPhysics;
 import nl.soccar.physics.models.CarPhysics;
 import org.jbox2d.dynamics.World;
 
-import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -122,17 +121,9 @@ public final class GameEngine {
         Rectangle leftGoal = map.getGoalBlue();
         Rectangle rightGoal = map.getGoalRed();
         Ball ball = map.getBall();
-        Notification notification = game.getNotification();
 
         float ballX = ball.getX();
         float ballRadius = ball.getRadius();
-
-        // Handle notification
-        if (notification != null && (ballX > rightGoal.getX() + ballRadius
-                || ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius)) {
-            notification.setDisplayTime(LocalTime.now());
-            notification.setPlayer(ball.getLastTouched());
-        }
 
         // Handle score event
         if (ballX > rightGoal.getX() + ballRadius) {
