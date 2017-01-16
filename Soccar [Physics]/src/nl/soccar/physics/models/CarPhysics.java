@@ -97,6 +97,8 @@ public class CarPhysics extends AbstractWorldObject {
 
     @Override
     protected void doReset() {
+        trail.clear();
+
         car.move(originalPos.x, originalPos.y, (float) Math.toDegrees(originalDegree));
         car.setBoostAmount(Car.DEFAULT_BOOST_AMOUNT);
 
