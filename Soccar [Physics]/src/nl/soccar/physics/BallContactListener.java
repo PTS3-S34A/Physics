@@ -1,9 +1,13 @@
 package nl.soccar.physics;
 
-import nl.soccar.library.*;
+import nl.soccar.library.Ball;
+import nl.soccar.library.Car;
+import nl.soccar.library.Player;
+import nl.soccar.library.Session;
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
 import org.jbox2d.collision.Manifold;
+import org.jbox2d.dynamics.Fixture;
 import org.jbox2d.dynamics.contacts.Contact;
 
 /**
@@ -14,58 +18,47 @@ public class BallContactListener implements ContactListener {
 
     @Override
     public void beginContact(Contact contact) {
-
-        // A car might have been part of the collision.
-        Car car = null;
-
-        // The fixtures from the collision.
-        Object fixtureA = contact.getFixtureA().getUserData();
-        Object fixtureB = contact.getFixtureB().getUserData();
-
-        // Fixtures have to be an object.
-        if (fixtureA == null || fixtureB == null) {
+        Car car = getCarFromFixtures(contact.getFixtureA(), contact.getFixtureB());
+        if (car == null) {
             return;
         }
 
-        // FixtureA is a car, fixtureB is a ball.
-        if (fixtureA instanceof Car && fixtureB instanceof Ball) {
-            car = (Car) fixtureA;
+        Player player = car.getPlayer();
+
+        Session session = player.getCurrentSession();
+        if (session == null) {
+            return;
         }
 
-        // FixturaA is a ball, fixtureB is a car.
-        else if (fixtureA instanceof Ball && fixtureB instanceof Car) {
-            car = (Car) fixtureB;
+        session.getGame().getMap().getBall().setLastTouched(player);
+    }
+
+    /**
+     * Gets a car from two fixtures, by determining which one is a Ball and which one is a Car.
+     *
+     * @param fixtureA The first Fixture connected to a Contact.
+     * @param fixtureB The second Fixture connected to a Contact.
+     * @return The Car, if found at all, of the Player that touched the Ball.
+     */
+    private Car getCarFromFixtures(Fixture fixtureA, Fixture fixtureB) {
+        if (fixtureA == null || fixtureB == null) {
+            return null;
         }
 
-        // If one of the above conditions are true, a player has touched the ball.
-        if (car != null) {
-            Player player = car.getPlayer();
-            if (player == null) {
-                return;
-            }
+        Object userDataA = fixtureA.getUserData();
+        Object userDataB = fixtureB.getUserData();
 
-            Session session = player.getCurrentSession();
-            if (session == null) {
-                return;
-            }
-
-            Game game = session.getGame();
-            if (game == null) {
-                return;
-            }
-
-            Map map = game.getMap();
-            if (map == null) {
-                return;
-            }
-
-            Ball ball = map.getBall();
-            if (ball == null) {
-                return;
-            }
-            
-            ball.setLastTouched(player);
+        if (userDataA == null || userDataB == null) {
+            return null;
         }
+
+        if (userDataA instanceof Car && userDataB instanceof Ball) {
+            return (Car) userDataA; // FixtureA is a car, fixtureB is a ball.
+        } else if (userDataA instanceof Ball && userDataB instanceof Car) {
+            return (Car) userDataB; // FixtureA is a ball, fixtureB is a car.
+        }
+
+        return null;
     }
 
     @Override
