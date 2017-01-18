@@ -112,7 +112,7 @@ public class BallPhysics extends AbstractWorldObject {
 
     /**
      * Returns the linear velocity Y value.
-     *1
+     *
      * @return The linear velocity Y value.
      */
     public float getLinearVelocityY() {
