@@ -147,6 +147,9 @@ public class CarPhysics extends AbstractWorldObject {
         }
     }
 
+    /**
+     * Updates the boost trail.
+     */
     private void updateBoost() {
         // Only allow boosting when the trail is gone.
         if (car.getThrottleAction() == ThrottleAction.BOOST && trail.isEmpty()) {
@@ -188,38 +191,77 @@ public class CarPhysics extends AbstractWorldObject {
         return (float) Math.toDegrees(body.getAngle());
     }
 
+    /**
+     * Returns the linear velocity X value.
+     *
+     * @return The linear velocity X value.
+     */
     public float getLinearVelocityX() {
         return body.getLinearVelocity().x;
     }
 
+    /**
+     * Returns the linear velocity Y value.
+     *
+     * @return The linear velocity Y value.
+     */
     public float getLinearVelocityY() {
         return body.getLinearVelocity().y;
     }
 
+    /**
+     * Returns the angular velocity value.
+     *
+     * @return The angular velocity value.
+     */
     public float getAngularVelocity() {
         return body.getAngularVelocity();
     }
 
+    /**
+     * Returns the steer angle.
+     * @return The steer angle.
+     */
     public float getSteerAngle() {
         return steerAngle;
     }
 
+    /**
+     * Returns the Box2D car body.
+     * @return The Box2D car body.
+     */
     public Body getBody() {
         return body;
     }
 
+    /**
+     * Returns a list of all wheels of the car.
+     * @return List of all wheels of the car.
+     */
     public List<WheelPhysics> getWheels() {
         return Collections.unmodifiableList(wheels);
     }
 
+    /**
+     * Returns a list of all trail positions.
+     * @return A list of all trail positions.
+     */
     public List<Point2D> getTrail() {
         return trail;
     }
 
+    /**
+     * Returns whether the boost is active.
+     * @return Whether the boost is active.
+     */
     public boolean isBoostActive() {
         return boostActive;
     }
 
+    /**
+     * Returns the car object.
+     * @return The car object.
+     */
     public Car getCar() {
         return car;
     }

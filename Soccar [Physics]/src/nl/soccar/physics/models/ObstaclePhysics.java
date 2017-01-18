@@ -81,6 +81,10 @@ public class ObstaclePhysics extends AbstractWorldObject {
         return body.getPosition().y;
     }
 
+    /**
+     * Returns this obstacle.
+     * @return This obstacle.
+     */
     public Obstacle getObstacle() {
         return obstacle;
     }

@@ -31,10 +31,9 @@ public final class GameEngine {
     private long lastSecondsDecreasedMs = 0;
 
     /**
-     * Initiates a new GamePhysics Object. It creates a world using settings
-     * defined in constants.
+     * Creates a new game engine object.
      *
-     * @param game
+     * @param session The session object.
      */
     public GameEngine(Session session) {
         this.session = session;
@@ -46,6 +45,9 @@ public final class GameEngine {
         world.setContactListener(new BallContactListener());
     }
 
+    /**
+     * Starts the game.
+     */
     public void start() {
         if (game.getStatus() != GameStatus.STOPPED) {
             return;
@@ -63,6 +65,9 @@ public final class GameEngine {
         }, 0, PhysicsConstants.ENGINE_REFRESH_RATE);
     }
 
+    /**
+     * Stops the game.
+     */
     public void stop() {
         game.stop();
 
@@ -71,6 +76,11 @@ public final class GameEngine {
         timer = null;
     }
 
+    /**
+     * Adds a game event listener.
+     *
+     * @param listener The game event listener.
+     */
     public void addListener(GameEventListener listener) {
         Objects.requireNonNull(listener);
 
@@ -79,6 +89,11 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Removes a game event listener.
+     *
+     * @param listener The game event listener.
+     */
     public void removeListener(GameEventListener listener) {
         Objects.requireNonNull(listener);
 
@@ -116,6 +131,9 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Verifies if a goal has been scored and updates the score accordingly.
+     */
     private void checkScored() {
         Map map = game.getMap();
         Rectangle leftGoal = map.getGoalBlue();
@@ -128,11 +146,18 @@ public final class GameEngine {
         // Handle score event
         if (ballX > rightGoal.getX() + ballRadius) {
             listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_BLUE));
+            listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_BLUE));
         } else if (ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius) {
             listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_RED));
         }
     }
 
+    /**
+     * Adds a car to the world.
+     *
+     * @param player The player the car belongs to.
+     * @param car    The car that will be added.
+     */
     public void addCar(Player player, CarPhysics car) {
         cars.put(player, car);
 
@@ -141,6 +166,11 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Removes a car from the world.
+     *
+     * @param player The car to be removed.
+     */
     public void removeCar(Player player) {
         CarPhysics car = cars.remove(player);
 
@@ -149,6 +179,11 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Adds a world object to the world.
+     *
+     * @param object The world object to be added.
+     */
     public void addWorldObject(WorldObject object) {
         if (object instanceof CarPhysics) {
             throw new UnsupportedOperationException("Please use addCar(..) to add a car to the World.");
@@ -163,6 +198,11 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Removes a world object from the world.
+     *
+     * @param object The world object to be removed.
+     */
     public void removeWorldObject(WorldObject object) {
         if (object instanceof Car) {
             throw new UnsupportedOperationException("Please use removeCar(..) to remove a car from the World.");
@@ -177,6 +217,9 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Resets the position of all world objects.
+     */
     public void resetWorldObjects() {
         synchronized (objects) {
             objects.forEach(WorldObject::reset);
@@ -185,6 +228,12 @@ public final class GameEngine {
         world.clearForces();
     }
 
+    /**
+     * Gets the car object from a player.
+     *
+     * @param player The player to get the car from.
+     * @return The car object that belongs to the player.
+     */
     public CarPhysics getCarFromPlayer(Player player) {
         return cars.get(player);
     }
@@ -195,14 +244,29 @@ public final class GameEngine {
         }
     }
 
+    /**
+     * Gets the ball object.
+     *
+     * @return The ball object.
+     */
     public BallPhysics getBall() {
         return ball;
     }
 
+    /**
+     * Gets the world object.
+     *
+     * @return The world object.
+     */
     public World getWorld() {
         return world;
     }
 
+    /**
+     * Gets the game object
+     *
+     * @return The game object.
+     */
     public Game getGame() {
         return game;
     }

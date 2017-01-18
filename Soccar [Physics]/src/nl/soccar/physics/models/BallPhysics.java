@@ -49,6 +49,7 @@ public class BallPhysics extends AbstractWorldObject {
         ball.move(getX(), getY(), getDegree());
     }
 
+    @Override
     protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
         ball.move(x, y, 0);
 
@@ -100,16 +101,30 @@ public class BallPhysics extends AbstractWorldObject {
         return (float) Math.toDegrees(body.getAngle());
     }
 
+    /**
+     * Returns the linear velocity X value.
+     *
+     * @return The linear velocity X value.
+     */
     public float getLinearVelocityX() {
         return body.getLinearVelocity().x;
     }
 
+    /**
+     * Returns the linear velocity Y value.
+     *
+     * @return The linear velocity Y value.
+     */
     public float getLinearVelocityY() {
         return body.getLinearVelocity().y;
     }
 
+    /**
+     * Returns the angular velocity value.
+     *
+     * @return The angular velocity value.
+     */
     public float getAngularVelocity() {
         return body.getAngularVelocity();
     }
-
 }
