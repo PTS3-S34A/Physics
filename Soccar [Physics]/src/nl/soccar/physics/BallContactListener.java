@@ -41,10 +41,6 @@ public class BallContactListener implements ContactListener {
      * @return The Car, if found at all, of the Player that touched the Ball.
      */
     private Car getCarFromFixtures(Fixture fixtureA, Fixture fixtureB) {
-        if (fixtureA == null || fixtureB == null) {
-            return null;
-        }
-
         Object userDataA = fixtureA.getUserData();
         Object userDataB = fixtureB.getUserData();
 
