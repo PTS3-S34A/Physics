@@ -18,19 +18,16 @@ import java.util.*;
 public final class GameEngine {
 
     private final World world;
-
     private final Session session;
-    private final Room room;
     private final Game game;
-
     private final List<WorldObject> objects = new ArrayList<>();
     private final java.util.Map<Player, CarPhysics> cars = new HashMap<>();
     private final List<GameEventListener> listeners = new ArrayList<>();
+    private BallPhysics ballPhysics;
     private Timer timer;
-    private BallPhysics ball;
     private long lastSecondsDecreasedMs = 0;
 
-    /**
+    /**l
      * Creates a new game engine object.
      *
      * @param session The session object.
@@ -38,7 +35,6 @@ public final class GameEngine {
     public GameEngine(Session session) {
         this.session = session;
         game = session.getGame();
-        room = session.getRoom();
 
         // doSleep (second parameter) is true for better performance
         world = new World(PhysicsConstants.GRAVITY_ANGLE, true);
@@ -118,15 +114,10 @@ public final class GameEngine {
             lastSecondsDecreasedMs = System.currentTimeMillis();
         }
 
-        // Update every object in the world
-        synchronized (objects) {
-            switch (game.getStatus()) {
-                case RUNNING:
-                    objects.forEach(WorldObject::step);
-                    checkScored();
-                    break;
-                default:
-                    break;
+        if (game.getStatus() == GameStatus.RUNNING) {
+            synchronized (objects) {
+                objects.forEach(WorldObject::step);
+                checkScored();
             }
         }
     }
@@ -190,7 +181,7 @@ public final class GameEngine {
         }
 
         if (object instanceof BallPhysics) {
-            ball = (BallPhysics) object;
+            ballPhysics = (BallPhysics) object;
         }
 
         synchronized (objects) {
@@ -209,7 +200,7 @@ public final class GameEngine {
         }
 
         if (object instanceof BallPhysics) {
-            ball = null;
+            ballPhysics = null;
         }
 
         synchronized (objects) {
@@ -250,7 +241,7 @@ public final class GameEngine {
      * @return The ball object.
      */
     public BallPhysics getBall() {
-        return ball;
+        return ballPhysics;
     }
 
     /**
