@@ -52,15 +52,6 @@ public class ObstaclePhysics extends AbstractWorldObject {
         body.createFixture(fd);
     }
 
-    /**
-     * Returns the obstacle object.
-     *
-     * @return The obstacle object.
-     */
-    public Obstacle getObstacle() {
-        return obstacle;
-    }
-
     @Override
     protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
         obstacle.move(x, y, degree);
@@ -88,6 +79,14 @@ public class ObstaclePhysics extends AbstractWorldObject {
     @Override
     public float getY() {
         return body.getPosition().y;
+    }
+
+    /**
+     * Returns this obstacle.
+     * @return This obstacle.
+     */
+    public Obstacle getObstacle() {
+        return obstacle;
     }
 
     @Override

@@ -30,16 +30,13 @@ public class WheelPhysics extends AbstractWorldObject {
 
     private final float width;
     private final float height;
-
-    private final boolean steerable;
-    private final boolean powered;
-
     private final World world;
-    private Body body;
-    private Joint joint;
-
+    private boolean steerable;
+    private boolean powered;
     private float desiredSpeed = 0.0F;
     private int power;
+    private Body body;
+    private Joint joint;
 
 
     /**
@@ -172,6 +169,26 @@ public class WheelPhysics extends AbstractWorldObject {
     }
 
     /**
+     * Gets the lateral velocity.
+     *
+     * @return The lateral velocity.
+     */
+    private Vec2 getLateralVelocity() {
+        Vec2 currentRightNormal = body.getWorldVector(new Vec2(1, 0));
+        return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
+    }
+
+    /**
+     * Gets the forward velocity.
+     *
+     * @return The forward velocity.
+     */
+    private Vec2 getForwardVelocity() {
+        Vec2 currentRightNormal = body.getWorldVector(new Vec2(0, 1));
+        return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
+    }
+
+    /**
      * Sets the speed the carPhysics should go towards. This is based on the ThrottleAction.
      * The carPhysics will move towards this speed in the UpdateDrive method.
      *
@@ -207,61 +224,6 @@ public class WheelPhysics extends AbstractWorldObject {
      */
     private void setAngle(float angle) {
         body.m_sweep.a = carPhysics.getBody().getAngle() + angle;
-
-    /**
-     * Gets the lateral velocity vector.
-     *
-     * @return Lateral velocity
-     */
-    private Vec2 getLateralVelocity() {
-        Vec2 currentRightNormal = body.getWorldVector(new Vec2(1, 0));
-        return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
-    }
-
-    /**
-     * Gets the forward velocity.
-     *
-     * @return Forward velocity
-     */
-    private Vec2 getForwardVelocity() {
-        Vec2 currentRightNormal = body.getWorldVector(new Vec2(0, 1));
-        return currentRightNormal.mul(Vec2.dot(currentRightNormal, body.getLinearVelocity()));
-    }
-
-    /**
-     * Returns the wheel width.
-     *
-     * @return The wheel width.
-     */
-    public float getWidth() {
-        return width;
-    }
-
-    /**
-     * Returns the wheel height.
-     *
-     * @return The wheel height.
-     */
-    public float getHeight() {
-        return height;
-    }
-
-    /**
-     * Returns whether this wheel is steerable.
-     *
-     * @return boolean
-     */
-    public boolean isSteerable() {
-        return steerable;
-    }
-
-    /**
-     * Returns whether this wheel is powered.
-     *
-     * @return boolean
-     */
-    public boolean isPowered() {
-        return powered;
     }
 
     @Override
@@ -277,6 +239,42 @@ public class WheelPhysics extends AbstractWorldObject {
     @Override
     public float getDegree() {
         return (float) Math.toDegrees(body.getAngle());
+    }
+
+    /**
+     * Returns the width of the wheel.
+     *
+     * @return The width of the wheel.
+     */
+    public float getWidth() {
+        return width;
+    }
+
+    /**
+     * Returns the height of the wheel.
+     *
+     * @return The height of the wheel.
+     */
+    public float getHeight() {
+        return height;
+    }
+
+    /**
+     * Returns whether this wheel is steerable.
+     *
+     * @return Whether the wheel is steerable.
+     */
+    public boolean isSteerable() {
+        return steerable;
+    }
+
+    /**
+     * Returns whether the wheel is powered.
+     *
+     * @return Whether the wheel is powered.
+     */
+    public boolean isPowered() {
+        return powered;
     }
 
 }

@@ -10,6 +10,14 @@ import nl.soccar.physics.GameEngine;
  */
 public interface GameEventListener {
 
+    /**
+     * This method is called when a ball enters the goal.
+     *
+     * @param engine The game engine.
+     * @param session The session.
+     * @param ball The ball.
+     * @param type The event type.
+     */
     void onBallInGoal(GameEngine engine, Session session, Ball ball, EventType type);
 
 }

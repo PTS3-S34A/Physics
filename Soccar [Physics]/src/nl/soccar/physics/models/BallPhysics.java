@@ -17,15 +17,16 @@ public class BallPhysics extends AbstractWorldObject {
     private static final float DENSITY = 0.01F;
     private static final float FRICTION = 1.0F;
     private static final float RESTITUTION = 0.8F;
+
     private static final float LINEAR_DAMPING = 1.0F;
     private static final float ANGULAR_DAMPING = 1.0F;
 
+    private final Vec2 originalPos;
+
     private final World world;
+    private final float radius;
     private Body body;
     private Ball ball;
-
-    private final float radius;
-    private final Vec2 originalPos;
 
     /**
      * Initiates a new BallPhysics Object using the given parameter.
@@ -85,33 +86,6 @@ public class BallPhysics extends AbstractWorldObject {
         body.createFixture(fd);
     }
 
-    /**
-     * Returns the X value from the linear velocity vector
-     *
-     * @return LinearVelocityX
-     */
-    public float getLinearVelocityX() {
-        return body.getLinearVelocity().x;
-    }
-
-    /**
-     * Returns the Y value from the linear velocity vector
-     *
-     * @return LinearVelocityY
-     */
-    public float getLinearVelocityY() {
-        return body.getLinearVelocity().y;
-    }
-
-    /**
-     * Returns the angular velocity
-     *
-     * @return AngularVelocity
-     */
-    public float getAngularVelocity() {
-        return body.getAngularVelocity();
-    }
-
     @Override
     public float getX() {
         return body.getPosition().x;
@@ -127,4 +101,30 @@ public class BallPhysics extends AbstractWorldObject {
         return (float) Math.toDegrees(body.getAngle());
     }
 
+    /**
+     * Returns the linear velocity X value.
+     *
+     * @return The linear velocity X value.
+     */
+    public float getLinearVelocityX() {
+        return body.getLinearVelocity().x;
+    }
+
+    /**
+     * Returns the linear velocity Y value.
+     *1
+     * @return The linear velocity Y value.
+     */
+    public float getLinearVelocityY() {
+        return body.getLinearVelocity().y;
+    }
+
+    /**
+     * Returns the angular velocity value.
+     *
+     * @return The angular velocity value.
+     */
+    public float getAngularVelocity() {
+        return body.getAngularVelocity();
+    }
 }

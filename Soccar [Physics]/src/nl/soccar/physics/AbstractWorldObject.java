@@ -32,6 +32,9 @@ public abstract class AbstractWorldObject implements WorldObject {
         doStep();
     }
 
+    /**
+     * Go to the next frame.
+     */
     protected abstract void doStep();
 
     @Override
@@ -46,6 +49,16 @@ public abstract class AbstractWorldObject implements WorldObject {
         doPositionUpdate = true;
     }
 
+    /**
+     * Sets the position of the ball.
+     *
+     * @param x The X value.
+     * @param y The Y value.
+     * @param degree The degree value.
+     * @param linearVelocityX The linear velocity X value.
+     * @param linearVelocityY The linear velocity Y value.
+     * @param angularVelocity The angular velocity value.
+     */
     protected abstract void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity);
 
     @Override
@@ -53,8 +66,16 @@ public abstract class AbstractWorldObject implements WorldObject {
         doReset.set(true);
     }
 
+    /**
+     * Reset an objects attributes in the world.
+     */
     protected abstract void doReset();
 
+    /**
+     * Returns whether this object is currently being reset.
+     *
+     * @return Whether this object is currently being reset.
+     */
     public final boolean isResetting() {
         return doReset.get();
     }

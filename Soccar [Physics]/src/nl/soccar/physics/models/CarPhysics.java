@@ -21,24 +21,21 @@ import java.util.List;
 public class CarPhysics extends AbstractWorldObject {
 
     private static final boolean BULLET = true;
+
     private static final float DENSITY = 0.2F;
     private static final float RESTITUTION = 0.2F;
+
     private static final float WHEEL_POS_RATIO_X = 2.3F;
     private static final float WHEEL_POS_RATIO_Y = 4.0F;
 
     private final Vec2 originalPos;
     private final float originalDegree;
-
     private final List<WheelPhysics> wheels;
-
+    private final Car car;
     private final World world;
     private Body body;
-
-    private final Car car;
-
-    private List<Point2D> trail;
-
-    private float steerAngle;
+    private float steerAngle = 0.0F;
+    private List<Point2D> trail; // Holds the boost trail location
     private boolean boostActive;
 
     /**
@@ -53,7 +50,6 @@ public class CarPhysics extends AbstractWorldObject {
         this.car = car;
         this.trail = new ArrayList<>();
         this.boostActive = false;
-        this.steerAngle = 0.0F;
 
         float carWidth = car.getWidth();
         float carHeight = car.getHeight();
@@ -101,6 +97,8 @@ public class CarPhysics extends AbstractWorldObject {
 
     @Override
     protected void doReset() {
+        trail.clear();
+
         car.move(originalPos.x, originalPos.y, (float) Math.toDegrees(originalDegree));
         car.setBoostAmount(Car.DEFAULT_BOOST_AMOUNT);
 
@@ -150,7 +148,7 @@ public class CarPhysics extends AbstractWorldObject {
     }
 
     /**
-     * Handles the boost amount and the boost trail list
+     * Updates the boost trail.
      */
     private void updateBoost() {
         // Only allow boosting when the trail is gone.
@@ -178,88 +176,6 @@ public class CarPhysics extends AbstractWorldObject {
         }
     }
 
-    /**
-     * Returns the X value from the linear velocity vector
-     *
-     * @return LinearVelocityX
-     */
-    public float getLinearVelocityX() {
-        return body.getLinearVelocity().x;
-    }
-
-    /**
-     * Returns the Y value from the linear velocity vector
-     *
-     * @return LinearVelocityY
-     */
-    public float getLinearVelocityY() {
-        return body.getLinearVelocity().y;
-    }
-
-    /**
-     * Returns the angular velocity
-     *
-     * @return AngularVelocity
-     */
-    public float getAngularVelocity() {
-        return body.getAngularVelocity();
-    }
-
-    /**
-     * Returns the current steering angle of the car.
-     *
-     * @return The steering angle.
-     */
-    public float getSteerAngle() {
-        return steerAngle;
-    }
-
-
-    /**
-     * Returns the Box2D body.
-     *
-     * @return The Box2D body.
-     */
-    public Body getBody() {
-        return body;
-    }
-
-    /**
-     * Return the wheels that belong to this car.
-     *
-     * @return The wheel physics objects.
-     */
-    public List<WheelPhysics> getWheels() {
-        return Collections.unmodifiableList(wheels);
-    }
-
-    /**
-     * Returns the boost trail list.
-     *
-     * @return The boost trail list
-     */
-    public List<Point2D> getTrail() {
-        return trail;
-    }
-
-    /**
-     * Returns whether the boost is currently active.
-     *
-     * @return boolean
-     */
-    public boolean isBoostActive() {
-        return boostActive;
-    }
-
-    /**
-     * Returns the car object (library).
-     *
-     * @return The car object.
-     */
-    public Car getCar() {
-        return car;
-    }
-
     @Override
     public float getX() {
         return body.getPosition().x;
@@ -275,4 +191,78 @@ public class CarPhysics extends AbstractWorldObject {
         return (float) Math.toDegrees(body.getAngle());
     }
 
+    /**
+     * Returns the linear velocity X value.
+     *
+     * @return The linear velocity X value.
+     */
+    public float getLinearVelocityX() {
+        return body.getLinearVelocity().x;
+    }
+
+    /**
+     * Returns the linear velocity Y value.
+     *1
+     * @return The linear velocity Y value.
+     */
+    public float getLinearVelocityY() {
+        return body.getLinearVelocity().y;
+    }
+
+    /**
+     * Returns the angular velocity value.
+     *
+     * @return The angular velocity value.
+     */
+    public float getAngularVelocity() {
+        return body.getAngularVelocity();
+    }
+
+    /**
+     * Returns the steer angle.
+     * @return The steer angle.
+     */
+    public float getSteerAngle() {
+        return steerAngle;
+    }
+
+    /**
+     * Returns the Box2D car body.
+     * @return The Box2D car body.
+     */
+    public Body getBody() {
+        return body;
+    }
+
+    /**
+     * Returns a list of all wheels of the car.
+     * @return List of all wheels of the car.
+     */
+    public List<WheelPhysics> getWheels() {
+        return Collections.unmodifiableList(wheels);
+    }
+
+    /**
+     * Returns a list of all trail positions.
+     * @return A list of all trail positions.
+     */
+    public List<Point2D> getTrail() {
+        return trail;
+    }
+
+    /**
+     * Returns whether the boost is active.
+     * @return Whether the boost is active.
+     */
+    public boolean isBoostActive() {
+        return boostActive;
+    }
+
+    /**
+     * Returns the car object.
+     * @return The car object.
+     */
+    public Car getCar() {
+        return car;
+    }
 }

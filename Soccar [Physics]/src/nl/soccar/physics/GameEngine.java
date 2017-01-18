@@ -10,7 +10,6 @@ import nl.soccar.physics.models.BallPhysics;
 import nl.soccar.physics.models.CarPhysics;
 import org.jbox2d.dynamics.World;
 
-import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -26,19 +25,15 @@ public final class GameEngine {
 
     private final List<WorldObject> objects = new ArrayList<>();
     private final java.util.Map<Player, CarPhysics> cars = new HashMap<>();
-
     private final List<GameEventListener> listeners = new ArrayList<>();
-
     private Timer timer;
     private BallPhysics ball;
-
     private long lastSecondsDecreasedMs = 0;
 
     /**
-     * Initiates a new GamePhysics Object. It creates a world using settings
-     * defined in constants.
+     * Creates a new game engine object.
      *
-     * @param session the Session in which this GameEngine is operating.
+     * @param session The session object.
      */
     public GameEngine(Session session) {
         this.session = session;
@@ -51,7 +46,7 @@ public final class GameEngine {
     }
 
     /**
-     * Creates a new timer and starts the game with the specified frame rate.
+     * Starts the game.
      */
     public void start() {
         if (game.getStatus() != GameStatus.STOPPED) {
@@ -74,19 +69,17 @@ public final class GameEngine {
      * Stops the game.
      */
     public void stop() {
-        if (game.getStatus() == GameStatus.STOPPED) {
-            return;
-        }
-
         game.stop();
 
         timer.cancel();
+        timer.purge();
+        timer = null;
     }
 
     /**
-     * Adds a listener to this GameEngine.
+     * Adds a game event listener.
      *
-     * @param listener The listener to add.
+     * @param listener The game event listener.
      */
     public void addListener(GameEventListener listener) {
         Objects.requireNonNull(listener);
@@ -97,9 +90,9 @@ public final class GameEngine {
     }
 
     /**
-     * Removes a listener from this GameEngine.
+     * Removes a game event listener.
      *
-     * @param listener The listener to remove.
+     * @param listener The game event listener.
      */
     public void removeListener(GameEventListener listener) {
         Objects.requireNonNull(listener);
@@ -139,27 +132,20 @@ public final class GameEngine {
     }
 
     /**
-     * Checks on every frame whether the ball crossed the goal line and updates the score accordingly.
+     * Verifies if a goal has been scored and updates the score accordingly.
      */
     private void checkScored() {
         Map map = game.getMap();
         Rectangle leftGoal = map.getGoalBlue();
         Rectangle rightGoal = map.getGoalRed();
         Ball ball = map.getBall();
-        Notification notification = game.getNotification();
 
         float ballX = ball.getX();
         float ballRadius = ball.getRadius();
 
-        // Handle notification
-        if (notification != null && (ballX > rightGoal.getX() + ballRadius
-                || ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius)) {
-            notification.setDisplayTime(LocalTime.now());
-            notification.setPlayer(ball.getLastTouched());
-        }
-
         // Handle score event
         if (ballX > rightGoal.getX() + ballRadius) {
+            listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_BLUE));
             listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_BLUE));
         } else if (ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius) {
             listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_RED));
@@ -167,10 +153,10 @@ public final class GameEngine {
     }
 
     /**
-     * Adds a car to the World.
+     * Adds a car to the world.
      *
-     * @param player The Player that owns the Car.
-     * @param car The Car to add to the World.
+     * @param player The player the car belongs to.
+     * @param car    The car that will be added.
      */
     public void addCar(Player player, CarPhysics car) {
         cars.put(player, car);
@@ -183,7 +169,7 @@ public final class GameEngine {
     /**
      * Removes a car from the world.
      *
-     * @param player The Player that owns the Car.
+     * @param player The car to be removed.
      */
     public void removeCar(Player player) {
         CarPhysics car = cars.remove(player);
@@ -194,9 +180,9 @@ public final class GameEngine {
     }
 
     /**
-     * Adds an object to the World.
+     * Adds a world object to the world.
      *
-     * @param object The object to add to the World.
+     * @param object The world object to be added.
      */
     public void addWorldObject(WorldObject object) {
         if (object instanceof CarPhysics) {
@@ -213,9 +199,9 @@ public final class GameEngine {
     }
 
     /**
-     * Removes an object from the World.
+     * Removes a world object from the world.
      *
-     * @param object The Object to remove from the World.
+     * @param object The world object to be removed.
      */
     public void removeWorldObject(WorldObject object) {
         if (object instanceof Car) {
@@ -232,7 +218,7 @@ public final class GameEngine {
     }
 
     /**
-     * Resets all objects currently in the World.
+     * Resets the position of all world objects.
      */
     public void resetWorldObjects() {
         synchronized (objects) {
@@ -243,20 +229,15 @@ public final class GameEngine {
     }
 
     /**
-     * Get the car object that belongs to a player.
+     * Gets the car object from a player.
      *
-     * @param player The player to get the car object from.
-     * @return The car object.
+     * @param player The player to get the car from.
+     * @return The car object that belongs to the player.
      */
     public CarPhysics getCarFromPlayer(Player player) {
         return cars.get(player);
     }
 
-    /**
-     * Returns a list of all world objects.
-     *
-     * @return The world objects
-     */
     public List<WorldObject> getWorldObjects() {
         synchronized (objects) {
             return Collections.unmodifiableList(objects);
@@ -264,25 +245,25 @@ public final class GameEngine {
     }
 
     /**
-     * Returns the ball physics object.
+     * Gets the ball object.
      *
-     * @return The ball physics object.
+     * @return The ball object.
      */
     public BallPhysics getBall() {
         return ball;
     }
 
     /**
-     * Returns the Box2D world object.
+     * Gets the world object.
      *
-     * @return Box2D world.
+     * @return The world object.
      */
     public World getWorld() {
         return world;
     }
 
     /**
-     * Returns the game object from the library.
+     * Gets the game object
      *
      * @return The game object.
      */

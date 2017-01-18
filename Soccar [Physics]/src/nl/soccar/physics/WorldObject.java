@@ -56,6 +56,11 @@ public interface WorldObject {
      */
     float getDegree();
 
+    /**
+     * Returns whether this object is currently being reset.
+     *
+     * @return Whether this object is currently being reset.
+     */
     boolean isResetting();
 
 }
