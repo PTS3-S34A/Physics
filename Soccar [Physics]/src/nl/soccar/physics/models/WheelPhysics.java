@@ -205,10 +205,11 @@ public class WheelPhysics extends AbstractWorldObject {
                 desiredSpeed = -PhysicsConstants.CAR_MAX_REVERSE_SPEED;
                 power = PhysicsConstants.CAR_NORMAL_POWER;
                 break;
-            default:
             case IDLE:
                 desiredSpeed = 0;
                 break;
+            default:
+                throw new UnsupportedOperationException();
         }
 
         if (carPhysics.isBoostActive()) {
