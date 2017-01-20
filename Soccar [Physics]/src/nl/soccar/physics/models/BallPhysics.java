@@ -2,6 +2,7 @@ package nl.soccar.physics.models;
 
 import nl.soccar.library.Ball;
 import nl.soccar.physics.AbstractWorldObject;
+import nl.soccar.physics.GameEngine;
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.*;
@@ -23,7 +24,7 @@ public class BallPhysics extends AbstractWorldObject {
 
     private final Vec2 originalPos;
 
-    private final World world;
+    private final GameEngine engine;
     private final float radius;
     private Body body;
     private Ball ball;
@@ -31,11 +32,11 @@ public class BallPhysics extends AbstractWorldObject {
     /**
      * Initiates a new BallPhysics Object using the given parameter.
      *
-     * @param ball  The ball model to keep track of.
-     * @param world The world in which this model is placed.
+     * @param ball   The ball model to keep track of.
+     * @param engine The engine in which this model is placed.
      */
-    public BallPhysics(Ball ball, World world) {
-        this.world = world;
+    public BallPhysics(GameEngine engine, Ball ball) {
+        this.engine = engine;
 
         this.ball = ball;
         originalPos = new Vec2(ball.getX(), ball.getY());
@@ -51,6 +52,10 @@ public class BallPhysics extends AbstractWorldObject {
 
     @Override
     protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        if (isResetting()) {
+            return;
+        }
+
         ball.move(x, y, 0);
 
         body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
@@ -62,9 +67,7 @@ public class BallPhysics extends AbstractWorldObject {
     protected void doReset() {
         ball.move(originalPos.x, originalPos.y, 0);
 
-        if (body != null) {
-            world.destroyBody(body);
-        }
+        World world = engine.getWorld();
 
         BodyDef bd = new BodyDef();
         bd.type = BodyType.DYNAMIC;

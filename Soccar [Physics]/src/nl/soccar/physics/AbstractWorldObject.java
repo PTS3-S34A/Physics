@@ -19,14 +19,14 @@ public abstract class AbstractWorldObject implements WorldObject {
 
     @Override
     public final void step() {
-        if (doReset.get()) {
-            doReset();
-            doReset.set(false);
-        }
-
         if (doPositionUpdate) {
             doSetPosition(newX, newY, newDegree, newLinearVelocityX, newLinearVelocityY, newAngularVelocity);
             doPositionUpdate = false;
+        }
+
+        if (doReset.get()) {
+            doReset();
+            doReset.set(false);
         }
 
         doStep();

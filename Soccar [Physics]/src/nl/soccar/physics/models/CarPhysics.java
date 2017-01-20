@@ -4,6 +4,7 @@ import javafx.geometry.Point2D;
 import nl.soccar.library.Car;
 import nl.soccar.library.enumeration.ThrottleAction;
 import nl.soccar.physics.AbstractWorldObject;
+import nl.soccar.physics.GameEngine;
 import nl.soccar.physics.PhysicsConstants;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
@@ -28,11 +29,11 @@ public class CarPhysics extends AbstractWorldObject {
     private static final float WHEEL_POS_RATIO_X = 2.3F;
     private static final float WHEEL_POS_RATIO_Y = 4.0F;
 
+    private final GameEngine engine;
     private final Vec2 originalPos;
     private final float originalDegree;
     private final List<WheelPhysics> wheels;
     private final Car car;
-    private final World world;
     private Body body;
     private float steerAngle = 0.0F;
     private List<Point2D> trail; // Holds the boost trail location
@@ -42,11 +43,10 @@ public class CarPhysics extends AbstractWorldObject {
      * Initiates a new CarPhysics Object using the given parameters.
      *
      * @param car   The car model to keep track of.
-     * @param world The world in which this model is placed.
+     * @param engine The engine in which this model is placed.
      */
-    public CarPhysics(Car car, World world) {
-        this.world = world;
-
+    public CarPhysics(GameEngine engine, Car car) {
+        this.engine = engine;
         this.car = car;
         this.trail = new ArrayList<>();
         this.boostActive = false;
@@ -65,10 +65,10 @@ public class CarPhysics extends AbstractWorldObject {
         float wheelHeight = car.getWheelHeight();
 
         // Create wheels
-        wheels.add(new WheelPhysics(-carWidth / WHEEL_POS_RATIO_X, carHeight / WHEEL_POS_RATIO_Y, wheelWidth, wheelHeight, true, true, this, world));
-        wheels.add(new WheelPhysics(carWidth / WHEEL_POS_RATIO_X, carHeight / WHEEL_POS_RATIO_Y, wheelWidth, wheelHeight, true, true, this, world));
-        wheels.add(new WheelPhysics(-carWidth / WHEEL_POS_RATIO_X, -carHeight / WHEEL_POS_RATIO_Y, wheelWidth, wheelHeight, false, false, this, world));
-        wheels.add(new WheelPhysics(carWidth / WHEEL_POS_RATIO_X, -carHeight / WHEEL_POS_RATIO_Y, wheelWidth, wheelHeight, false, false, this, world));
+        wheels.add(new WheelPhysics(-carWidth / WHEEL_POS_RATIO_X, carHeight / WHEEL_POS_RATIO_Y, wheelWidth, wheelHeight, true, true, this, engine));
+        wheels.add(new WheelPhysics(carWidth / WHEEL_POS_RATIO_X, carHeight / WHEEL_POS_RATIO_Y, wheelWidth, wheelHeight, true, true, this, engine));
+        wheels.add(new WheelPhysics(-carWidth / WHEEL_POS_RATIO_X, -carHeight / WHEEL_POS_RATIO_Y, wheelWidth, wheelHeight, false, false, this, engine));
+        wheels.add(new WheelPhysics(carWidth / WHEEL_POS_RATIO_X, -carHeight / WHEEL_POS_RATIO_Y, wheelWidth, wheelHeight, false, false, this, engine));
     }
 
     @Override
@@ -88,6 +88,10 @@ public class CarPhysics extends AbstractWorldObject {
 
     @Override
     protected void doSetPosition(float x, float y, float degree, float linearVelocityX, float linearVelocityY, float angularVelocity) {
+        if (isResetting()) {
+            return;
+        }
+
         car.move(x, y, degree);
 
         body.setLinearVelocity(new Vec2(linearVelocityX, linearVelocityY));
@@ -102,9 +106,7 @@ public class CarPhysics extends AbstractWorldObject {
         car.move(originalPos.x, originalPos.y, (float) Math.toDegrees(originalDegree));
         car.setBoostAmount(Car.DEFAULT_BOOST_AMOUNT);
 
-        if (body != null) {
-            world.destroyBody(body);
-        }
+        World world = engine.getWorld();
 
         BodyDef bd = new BodyDef();
         bd.type = BodyType.DYNAMIC;
