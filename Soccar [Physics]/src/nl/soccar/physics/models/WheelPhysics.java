@@ -3,6 +3,7 @@ package nl.soccar.physics.models;
 import nl.soccar.library.enumeration.HandbrakeAction;
 import nl.soccar.library.enumeration.ThrottleAction;
 import nl.soccar.physics.AbstractWorldObject;
+import nl.soccar.physics.GameEngine;
 import nl.soccar.physics.PhysicsConstants;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
@@ -30,7 +31,7 @@ public class WheelPhysics extends AbstractWorldObject {
 
     private final float width;
     private final float height;
-    private final World world;
+    private final GameEngine engine;
     private boolean steerable;
     private boolean powered;
     private float desiredSpeed = 0.0F;
@@ -49,10 +50,10 @@ public class WheelPhysics extends AbstractWorldObject {
      * @param steerable  Determines whether this wheel is used to steer the Car.
      * @param powered    Determines whether this wheel is used to power the Car.
      * @param carPhysics The CarPhysics object.
-     * @param world      The world in which this Wheel is placed in.
+     * @param engine     The engine in which this Wheel is placed in.
      */
-    public WheelPhysics(float relPosX, float relPosY, float width, float height, boolean steerable, boolean powered, CarPhysics carPhysics, World world) {
-        this.world = world;
+    public WheelPhysics(float relPosX, float relPosY, float width, float height, boolean steerable, boolean powered, CarPhysics carPhysics, GameEngine engine) {
+        this.engine = engine;
 
         this.carPhysics = carPhysics;
 
@@ -87,13 +88,7 @@ public class WheelPhysics extends AbstractWorldObject {
 
     @Override
     protected void doReset() {
-        if (joint != null) {
-            world.destroyJoint(joint);
-        }
-
-        if (body != null) {
-            world.destroyBody(body);
-        }
+        World world = engine.getWorld();
 
         BodyDef bd = new BodyDef();
         bd.type = BodyType.DYNAMIC;

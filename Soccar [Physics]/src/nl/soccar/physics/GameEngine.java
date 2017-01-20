@@ -17,17 +17,19 @@ import java.util.*;
  */
 public final class GameEngine {
 
-    private final World world;
+    private final Object lock = new Object();
     private final Session session;
     private final Game game;
     private final List<WorldObject> objects = new ArrayList<>();
     private final java.util.Map<Player, CarPhysics> cars = new HashMap<>();
     private final List<GameEventListener> listeners = new ArrayList<>();
+    private World world;
     private BallPhysics ballPhysics;
     private Timer timer;
     private long lastSecondsDecreasedMs = 0;
 
-    /**l
+    /**
+     * l
      * Creates a new game engine object.
      *
      * @param session The session object.
@@ -107,7 +109,11 @@ public final class GameEngine {
             return;
         }
 
-        world.step(1.0F / PhysicsConstants.ENGINE_FPS, PhysicsConstants.VELOCITY_ITERATIONS, PhysicsConstants.POSITION_ITERATIONS);
+        synchronized (lock) {
+            if (world != null) {
+                world.step(1.0F / PhysicsConstants.ENGINE_FPS, PhysicsConstants.VELOCITY_ITERATIONS, PhysicsConstants.POSITION_ITERATIONS);
+            }
+        }
 
         if (System.currentTimeMillis() - lastSecondsDecreasedMs >= 1000) {
             game.decreaseGameTime();
@@ -212,11 +218,16 @@ public final class GameEngine {
      * Resets the position of all world objects.
      */
     public void resetWorldObjects() {
+        synchronized (lock) {
+            // doSleep (second parameter) is true for better performance
+            world = null;
+            world = new World(PhysicsConstants.GRAVITY_ANGLE, true);
+            world.setContactListener(new BallContactListener());
+        }
+
         synchronized (objects) {
             objects.forEach(WorldObject::reset);
         }
-
-        world.clearForces();
     }
 
     /**
@@ -250,7 +261,9 @@ public final class GameEngine {
      * @return The world object.
      */
     public World getWorld() {
-        return world;
+        synchronized (lock) {
+            return world;
+        }
     }
 
     /**
