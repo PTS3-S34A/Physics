@@ -143,7 +143,6 @@ public final class GameEngine {
         // Handle score event
         if (ballX > rightGoal.getX() + ballRadius) {
             listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_BLUE));
-            listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_BLUE));
         } else if (ballX < leftGoal.getX() + leftGoal.getWidth() - ballRadius) {
             listeners.forEach(l -> l.onBallInGoal(this, session, ball, EventType.GOAL_RED));
         }
